@@ -28,7 +28,8 @@ def generate_rules(n_nodes, connectivity, expected_p):
 class RBNNode(mdp.Node):
 
     def __init__(self, input_dim=None, output_dim=None, dtype='int32',
-                 connectivity=2, expected_p=0.5, input_connectivity=None):
+                 connectivity=2, expected_p=0.5, input_connectivity=None,
+                 n_runs_after_perturb=2, should_perturb=True):
         if input_connectivity > output_dim:
             raise mdp.NodeException('Cannot connect more input than available nodes')
 
@@ -38,6 +39,8 @@ class RBNNode(mdp.Node):
         self.connectivity = connectivity
         self.n_nodes = output_dim
         self.expected_p = expected_p
+        self.n_runs_after_perturb = n_runs_after_perturb
+        self.should_perturb = should_perturb
 
         if input_connectivity is None:
             input_connectivity = self.n_nodes
@@ -46,10 +49,10 @@ class RBNNode(mdp.Node):
                                                      replace=False)
         self.initialize()
 
-        #print "inpt_conn", self.input_connections
-        #print "state", self.nodes
-        #print "rules", self.rules
-        #print "conns", self.connections
+        print "inpt_conn", self.input_connections
+        print "state", self.nodes
+        print "rules", self.rules
+        print "conns", self.connections
 
     def _get_supported_dtypes(self):
         return ['int32']
@@ -69,25 +72,19 @@ class RBNNode(mdp.Node):
                                     self.expected_p)
 
     def _execute(self, input_array):
-        #print "Executing:", input_array.shape
-
-        output_states = []
+        output_states = [numpy.copy(self.nodes)]
 
         for perturbance in input_array:
-            #print "Pre-turb:",self.nodes, "p:", perturbance[0]
-            self.perturb_rbn(perturbance[0])
-            #print "Pos-turb:", self.nodes
-            self.run_crbn()
-            output_states.append(self.nodes)
-            #print "Post-update", self.nodes
+            if self.should_perturb:
+                self.perturb_rbn(perturbance[0])
+            for _ in range(self.n_runs_after_perturb):
+                self.run_crbn()
+            output_states.append(numpy.copy(self.nodes))
 
         return output_states
 
     def perturb_rbn(self, perturbance):
-        for node in self.input_connections:
-            #self.nodes[node] = self.nodes[node] and perturbance
-            #self.nodes[node] = self.nodes[node] ^ perturbance
-            self.nodes[node] = perturbance
+        self.nodes[self.input_connections] = perturbance
 
     def run_crbn(self):
         nodes_next = generate_nodes(self.n_nodes)
