@@ -29,7 +29,7 @@ class RBNNode(mdp.Node):
 
     def __init__(self, input_dim=None, output_dim=None, dtype='int32',
                  connectivity=2, expected_p=0.5, input_connectivity=None,
-                 n_runs_after_perturb=2, should_perturb=True):
+                 n_runs_after_perturb=1, should_perturb=True):
         if input_connectivity > output_dim:
             raise mdp.NodeException('Cannot connect more input than available nodes')
 
@@ -49,11 +49,6 @@ class RBNNode(mdp.Node):
                                                      replace=False)
         self.initialize()
 
-        print "inpt_conn", self.input_connections
-        print "state", self.nodes
-        print "rules", self.rules
-        print "conns", self.connections
-
     def _get_supported_dtypes(self):
         return ['int32']
 
@@ -72,14 +67,17 @@ class RBNNode(mdp.Node):
                                     self.expected_p)
 
     def _execute(self, input_array):
-        output_states = [numpy.copy(self.nodes)]
+        steps = input_array.shape[0]
 
-        for perturbance in input_array:
+        output_states = numpy.zeros((steps, self.output_dim))
+
+        for step in range(steps):
+            perturbance = input_array[step][0]
             if self.should_perturb:
-                self.perturb_rbn(perturbance[0])
+                self.perturb_rbn(perturbance)
             for _ in range(self.n_runs_after_perturb):
                 self.run_crbn()
-            output_states.append(numpy.copy(self.nodes))
+            output_states[step] = self.nodes
 
         return output_states
 
@@ -96,18 +94,3 @@ class RBNNode(mdp.Node):
             nodes_next[n] = new_value
 
         self.nodes = nodes_next
-
-if __name__ == '__main__':
-    rbn_node = RBNNode(input_dim=10, output_dim=10)
-
-    #seen_states = {}
-    #for i in range(100):
-    #    print str(rbn_node.nodes)
-    #    if str(rbn_node.nodes) in seen_states:
-    #        print "attractor from", seen_states[str(rbn_node.nodes)], "to", i
-    #        break
-
-    #    seen_states[str(rbn_node.nodes)] = i
-    #    rbn_node.update()
-
-    #print "Finito!"
