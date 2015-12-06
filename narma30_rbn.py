@@ -4,22 +4,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rbn_nodes import RBNNode
+from tasks import temporal
 
+training_dataset, test_dataset = temporal.create_datasets(5,
+        task_size=150,
+        delay=0,
+        window_size=3,
+        dataset_type="temporal_parity")
 
-def create_dataset(dataset_length, n_remember):
-    input_data = np.random.randint(2, size=dataset_length)
-    expected_output = np.zeros(dataset_length, dtype='int')
-
-    for idx in range(dataset_length):
-        from_idx = max(idx - n_remember, 0)
-        count = sum(input_data[from_idx:idx])
-        expected_output[idx] = count % 2 == 1
-
-    return (np.transpose([input_data]), np.transpose([expected_output]))
-
-
-training_dataset = [create_dataset(1000, 2) for _ in range(10)]
-test_dataset = create_dataset(1000, 2)
+#plt.matshow(test_dataset[0], cmap=plt.cm.gray)
+#plt.title('Test input')
+#plt.matshow(test_dataset[1], cmap=plt.cm.gray)
+#plt.title('Test output')
 
 n_nodes = 100
 rbn_reservoir = RBNNode(connectivity=2,

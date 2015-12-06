@@ -3,7 +3,7 @@ import numpy
 
 
 def generate_nodes(n_nodes):
-    return numpy.zeros(n_nodes, dtype='int32')
+    return numpy.zeros(n_nodes, dtype='int')
 
 
 def generate_connections(n_nodes, connectivity):
@@ -27,11 +27,12 @@ def generate_rules(n_nodes, connectivity, expected_p):
 
 class RBNNode(mdp.Node):
 
-    def __init__(self, input_dim=None, output_dim=None, dtype='int32',
+    def __init__(self, input_dim=None, output_dim=None, dtype='int',
                  connectivity=2, expected_p=0.5, input_connectivity=None,
                  n_runs_after_perturb=1, should_perturb=True):
         if input_connectivity > output_dim:
-            raise mdp.NodeException('Cannot connect more input than available nodes')
+            raise mdp.NodeException(
+                'Cannot connect more input than available nodes')
 
         super(RBNNode, self).__init__(
             input_dim=input_dim, output_dim=output_dim, dtype=dtype)
@@ -50,7 +51,7 @@ class RBNNode(mdp.Node):
         self.initialize()
 
     def _get_supported_dtypes(self):
-        return ['int32']
+        return ['int']
 
     def is_trainable(self):
         return False
