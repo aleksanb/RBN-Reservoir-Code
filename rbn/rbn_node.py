@@ -6,7 +6,7 @@ def create_empty_state(n_nodes):
     return numpy.zeros(n_nodes, dtype='int')
 
 
-def generate_connections(n_nodes, connectivity):
+def generate_connections(n_nodes, connectivity, heterogenous):
     return [
         [numpy.random.choice(
             range(n_nodes),
@@ -21,7 +21,6 @@ def generate_rule(connectivity, expected_p):
 
 
 def generate_rules(n_nodes, connectivity, expected_p):
-
     return [generate_rule(connectivity, expected_p) for n in range(n_nodes)]
 
 
@@ -43,6 +42,7 @@ class RBNNode(mdp.Node):
         self.expected_p = expected_p
         self.n_runs_after_perturb = n_runs_after_perturb
         self.should_perturb = should_perturb
+        self.heterogenous = heterogenous
 
         if input_connectivity is None:
             input_connectivity = self.n_nodes
@@ -63,7 +63,8 @@ class RBNNode(mdp.Node):
     def initialize(self):
         self.state = create_empty_state(self.n_nodes)
         self.connections = generate_connections(self.n_nodes,
-                                                self.connectivity)
+                                                self.connectivity,
+                                                self.heterogenous)
         self.rules = generate_rules(self.n_nodes,
                                     self.connectivity,
                                     self.expected_p)

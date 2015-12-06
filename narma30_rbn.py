@@ -1,15 +1,25 @@
 import Oger
 import mdp
 import matplotlib.pyplot as plt
+import pickle
+import time
 
 from rbn import rbn_node, complexity_measures
 from tasks import temporal
 
-gotta_remember = 3
+def dump_reservoir(reservoir):
+    complexity = complexity_measures.measure_computational_capability(rbn_reservoir, 10, 0)
+    path = "pickle_dumps/{}-[{}].pickle".format(time.time(), complexity)
+    pickle.dump(rbn_reservoir, open(path, 'w'))
+
+def get_reservoir(path):
+    return pickle.load(open(path, 'r'))
+
+gotta_remember = 4
 
 training_dataset, test_dataset = temporal.create_datasets(
     10,
-    task_size=150,
+    task_size=1000,
     delay=0,
     window_size=gotta_remember,
     dataset_type="temporal_parity")
@@ -22,14 +32,14 @@ training_dataset, test_dataset = temporal.create_datasets(
 n_nodes = 500
 rbn_reservoir = rbn_node.RBNNode(connectivity=2,
                                  heterogenous=True,
-                                 input_connectivity=50,
+                                 input_connectivity=80,
                                  output_dim=n_nodes,
                                  should_perturb=True)
+#rbn_reservoir = get_reservoir("pickle_dumps/[1449435450.66]-[0.213333333333].pickle")
 
-print complexity_measures.measure_computational_capability(rbn_reservoir, 10, 0)
+#dump_reservoir(rbn_reservoir)
 
-
-
+print complexity_measures.measure_computational_capability(rbn_reservoir, 100, gotta_remember)
 
 readout = Oger.nodes.RidgeRegressionNode(input_dim=n_nodes,
                                          output_dim=1,
@@ -42,9 +52,8 @@ reservoir_input = test_dataset[0]
 expected_output = test_dataset[1]
 
 actual_output = flow.execute(reservoir_input)
-avg = 0.5  # np.average(actual_output)
 for i in range(actual_output.shape[0]):
-    actual_output[i][0] = 1 if actual_output[i][0] > avg else 0
+    actual_output[i][0] = 1 if actual_output[i][0] > 0.5 else 0
 
 
 errors = sum(actual_output != expected_output)
@@ -66,9 +75,3 @@ plt.show()
 #plt.matshow(rbn_states, cmap=plt.cm.gray)
 #plt.title('RBN states')
 #plt.show()
-
-#print "NRMSE: " + str(Oger.utils.nrmse(expected, actually))
-
-#pylab.plot(expected, 'r')
-#pylab.plot(actually, 'b')
-#pylab.show()
