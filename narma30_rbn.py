@@ -1,27 +1,26 @@
 import Oger
 import mdp
 import matplotlib.pyplot as plt
-import numpy as np
-
-from rbn_nodes import RBNNode
+from rbn import rbn_node
 from tasks import temporal
 
-training_dataset, test_dataset = temporal.create_datasets(5,
-        task_size=150,
-        delay=0,
-        window_size=3,
-        dataset_type="temporal_parity")
+training_dataset, test_dataset = temporal.create_datasets(
+    5,
+    task_size=200,
+    delay=0,
+    window_size=4,
+    dataset_type="temporal_parity")
 
 #plt.matshow(test_dataset[0], cmap=plt.cm.gray)
 #plt.title('Test input')
 #plt.matshow(test_dataset[1], cmap=plt.cm.gray)
 #plt.title('Test output')
 
-n_nodes = 100
-rbn_reservoir = RBNNode(connectivity=2,
-                        input_connectivity=n_nodes/2,
-                        output_dim=n_nodes,
-                        should_perturb=True)
+n_nodes = 200
+rbn_reservoir = rbn_node.RBNNode(connectivity=2,
+                                 input_connectivity=n_nodes/2,
+                                 output_dim=n_nodes,
+                                 should_perturb=True)
 readout = Oger.nodes.RidgeRegressionNode(input_dim=n_nodes,
                                          output_dim=1,
                                          verbose=True)
@@ -33,7 +32,7 @@ reservoir_input = test_dataset[0]
 expected_output = test_dataset[1]
 
 actual_output = flow.execute(reservoir_input)
-avg = 0.5#np.average(actual_output)
+avg = 0.5  # np.average(actual_output)
 for i in range(actual_output.shape[0]):
     actual_output[i][0] = 1 if actual_output[i][0] > avg else 0
 
