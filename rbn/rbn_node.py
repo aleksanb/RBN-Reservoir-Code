@@ -2,7 +2,7 @@ import mdp
 import numpy
 
 
-def generate_nodes(n_nodes):
+def create_empty_state(n_nodes):
     return numpy.zeros(n_nodes, dtype='int')
 
 
@@ -29,7 +29,8 @@ class RBNNode(mdp.Node):
 
     def __init__(self, input_dim=None, output_dim=None, dtype='int',
                  connectivity=2, expected_p=0.5, input_connectivity=None,
-                 n_runs_after_perturb=1, should_perturb=True):
+                 n_runs_after_perturb=1, should_perturb=True,
+                 heterogenous=False):
         if input_connectivity > output_dim:
             raise mdp.NodeException(
                 'Cannot connect more input than available nodes')
@@ -60,7 +61,7 @@ class RBNNode(mdp.Node):
         return False
 
     def initialize(self):
-        self.nodes = generate_nodes(self.n_nodes)
+        self.state = create_empty_state(self.n_nodes)
         self.connections = generate_connections(self.n_nodes,
                                                 self.connectivity)
         self.rules = generate_rules(self.n_nodes,
@@ -78,20 +79,23 @@ class RBNNode(mdp.Node):
                 self.perturb_rbn(perturbance)
             for _ in range(self.n_runs_after_perturb):
                 self.run_crbn()
-            output_states[step] = self.nodes
+            output_states[step] = self.state
 
         return output_states
 
     def perturb_rbn(self, perturbance):
-        self.nodes[self.input_connections] = perturbance
+        self.state[self.input_connections] = perturbance
 
     def run_crbn(self):
-        nodes_next = generate_nodes(self.n_nodes)
+        next_state = create_empty_state(self.n_nodes)
         for n in range(self.n_nodes):
             neighbors = self.connections[n]
-            neighbor_states = self.nodes[neighbors]
+            neighbor_states = self.state[neighbors]
             rule_index = numpy.polyval(neighbor_states, 2)
             new_value = self.rules[n][rule_index]
-            nodes_next[n] = new_value
+            next_state[n] = new_value
 
-        self.nodes = nodes_next
+        self.state = next_state
+
+    def reset_state(self):
+        self.state = create_empty_state(self.n_nodes)

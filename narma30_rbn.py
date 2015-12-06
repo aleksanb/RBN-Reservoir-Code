@@ -1,14 +1,17 @@
 import Oger
 import mdp
 import matplotlib.pyplot as plt
-from rbn import rbn_node
+
+from rbn import rbn_node, complexity_measures
 from tasks import temporal
 
+gotta_remember = 3
+
 training_dataset, test_dataset = temporal.create_datasets(
-    5,
-    task_size=200,
+    10,
+    task_size=150,
     delay=0,
-    window_size=4,
+    window_size=gotta_remember,
     dataset_type="temporal_parity")
 
 #plt.matshow(test_dataset[0], cmap=plt.cm.gray)
@@ -16,11 +19,18 @@ training_dataset, test_dataset = temporal.create_datasets(
 #plt.matshow(test_dataset[1], cmap=plt.cm.gray)
 #plt.title('Test output')
 
-n_nodes = 200
+n_nodes = 500
 rbn_reservoir = rbn_node.RBNNode(connectivity=2,
-                                 input_connectivity=n_nodes/2,
+                                 heterogenous=True,
+                                 input_connectivity=50,
                                  output_dim=n_nodes,
                                  should_perturb=True)
+
+print complexity_measures.measure_computational_capability(rbn_reservoir, 10, 0)
+
+
+
+
 readout = Oger.nodes.RidgeRegressionNode(input_dim=n_nodes,
                                          output_dim=1,
                                          verbose=True)
