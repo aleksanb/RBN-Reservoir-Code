@@ -15,24 +15,24 @@ def dump_reservoir(reservoir):
 def get_reservoir(path):
     return pickle.load(open(path, 'r'))
 
-gotta_remember = 4
+gotta_remember = 5
 
 training_dataset, test_dataset = temporal.create_datasets(
-    10,
-    task_size=1000,
+    5,
+    task_size=150,
     delay=0,
     window_size=gotta_remember,
-    dataset_type="temporal_parity")
+    dataset_type="temporal_density")
 
-#plt.matshow(test_dataset[0], cmap=plt.cm.gray)
-#plt.title('Test input')
-#plt.matshow(test_dataset[1], cmap=plt.cm.gray)
-#plt.title('Test output')
+plt.matshow(test_dataset[0][:10], cmap=plt.cm.gray)
+plt.title('Test input')
+plt.matshow(test_dataset[1][:10], cmap=plt.cm.gray)
+plt.title('Test output')
 
-n_nodes = 500
+n_nodes = 200
 rbn_reservoir = rbn_node.RBNNode(connectivity=2,
                                  heterogenous=True,
-                                 input_connectivity=80,
+                                 input_connectivity=70,
                                  output_dim=n_nodes,
                                  should_perturb=True)
 #rbn_reservoir = get_reservoir("pickle_dumps/[1449435450.66]-[0.213333333333].pickle")
@@ -59,8 +59,8 @@ for i in range(actual_output.shape[0]):
 errors = sum(actual_output != expected_output)
 print "Errors: ", errors, " of ", len(actual_output)
 
-plt.plot(actual_output, 'r')
-plt.plot(expected_output, 'b')
+#plt.plot(actual_output, 'r')
+#plt.plot(expected_output, 'b')
 plt.show()
 
 
