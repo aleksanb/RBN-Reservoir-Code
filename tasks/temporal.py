@@ -36,9 +36,8 @@ def create_datasets(n_datasets,
         'temporal_density': temporal_density
     }[dataset_type]
 
-    datasets = [generic_temporal(label_function,
-                                 task_size,
-                                 delay,
-                                 window_size)
-                for _ in range(n_datasets)]
-    return datasets[:-1], datasets[-1]
+    return [generic_temporal(label_function,
+                             task_size,
+                             delay,
+                             window_size)
+            for _ in range(n_datasets)]

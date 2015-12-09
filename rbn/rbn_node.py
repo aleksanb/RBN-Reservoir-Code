@@ -8,10 +8,10 @@ def create_empty_state(n_nodes):
 
 def generate_connections(n_nodes, connectivity, heterogenous):
     return [
-        [numpy.random.choice(
+        numpy.random.choice(
             range(n_nodes),
             connectivity,
-            replace=False)]
+            replace=False)
         for n in range(n_nodes)]
 
 
@@ -29,7 +29,8 @@ class RBNNode(mdp.Node):
     def __init__(self, input_dim=None, output_dim=None, dtype='int',
                  connectivity=2, expected_p=0.5, input_connectivity=None,
                  n_runs_after_perturb=1, should_perturb=True,
-                 heterogenous=False):
+                 heterogenous=False, input_connections=None, connections=None,
+                 rules=None):
         if input_connectivity > output_dim:
             raise mdp.NodeException(
                 'Cannot connect more input than available nodes')
@@ -45,7 +46,29 @@ class RBNNode(mdp.Node):
         self.heterogenous = heterogenous
         self.input_connectivity = input_connectivity or self.n_nodes
 
-        self.initialize()
+        # Initialize state and connections
+        self.state = create_empty_state(self.n_nodes)
+
+        if input_connections is not None:
+            self.input_connections = input_connections
+        else:
+            self.input_connections =\
+                numpy.random.choice(range(self.n_nodes),
+                                    self.input_connectivity,
+                                    replace=False)
+
+        if connections is not None:
+            self.connections = connections
+        else:
+            self.connections = generate_connections(self.n_nodes,
+                                                    self.connectivity,
+                                                    self.heterogenous)
+        if rules is not None:
+            self.rules = rules
+        else:
+            rules = generate_rules(self.n_nodes,
+                                   self.connectivity,
+                                   self.expected_p)
 
     def _get_supported_dtypes(self):
         return ['int']
@@ -55,18 +78,6 @@ class RBNNode(mdp.Node):
 
     def is_invertible(self):
         return False
-
-    def initialize(self):
-        self.input_connections = numpy.random.choice(range(self.n_nodes),
-                                                     self.input_connectivity,
-                                                     replace=False)
-        self.state = create_empty_state(self.n_nodes)
-        self.connections = generate_connections(self.n_nodes,
-                                                self.connectivity,
-                                                self.heterogenous)
-        self.rules = generate_rules(self.n_nodes,
-                                    self.connectivity,
-                                    self.expected_p)
 
     def _execute(self, input_array):
         steps = input_array.shape[0]
