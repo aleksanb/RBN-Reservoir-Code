@@ -43,12 +43,8 @@ class RBNNode(mdp.Node):
         self.n_runs_after_perturb = n_runs_after_perturb
         self.should_perturb = should_perturb
         self.heterogenous = heterogenous
+        self.input_connectivity = input_connectivity or self.n_nodes
 
-        if input_connectivity is None:
-            input_connectivity = self.n_nodes
-        self.input_connections = numpy.random.choice(range(self.n_nodes),
-                                                     input_connectivity,
-                                                     replace=False)
         self.initialize()
 
     def _get_supported_dtypes(self):
@@ -61,6 +57,9 @@ class RBNNode(mdp.Node):
         return False
 
     def initialize(self):
+        self.input_connections = numpy.random.choice(range(self.n_nodes),
+                                                     self.input_connectivity,
+                                                     replace=False)
         self.state = create_empty_state(self.n_nodes)
         self.connections = generate_connections(self.n_nodes,
                                                 self.connectivity,
