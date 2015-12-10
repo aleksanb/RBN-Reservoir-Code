@@ -38,7 +38,7 @@ def rbn_genome_size(n_nodes, connectivity):
 
 if __name__ == '__main__':
     # Create datasets
-    dataset_type = "temporal_density"
+    dataset_type = "temporal_parity"
     datasets = default_input('Datasets', 10)
     task_size = default_input('Dataset length', 200)
     window_size = default_input('Window size', 3)
@@ -105,15 +105,16 @@ if __name__ == '__main__':
         generation, adults = solve(reservoir_problem)
 
         fitnesses = [x.fitness for x in adults]
+        top3 = fitnesses[-3:]
+        top3.reverse()
         mean = np.mean(fitnesses)
         std = np.std(fitnesses)
 
-        logging.info('Top 5 fitnesses: {}'.format(fitnesses[-5:]))
-
-        description = '{}-[N:{}-K:{}]-[ACC:{}-MEAN:{}-STD:{}-GEN:{}]'.format(
+        description = '{}-[N:{}-K:{}]-[TOP:{}-MEAN:{}-STD:{}-GEN:{}]'.format(
             problem_description,
             n_nodes,
             connectivity,
+            '{}'.format(top3),
             fitnesses[-1],
             mean,
             std,
