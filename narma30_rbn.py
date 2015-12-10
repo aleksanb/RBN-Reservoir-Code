@@ -73,7 +73,7 @@ if __name__ == '__main__':
     datasets = temporal.create_datasets(
         datasets,
         task_size=task_size,
-        window_size=gotta_remember,
+        window_size=window_size,
         dataset_type="temporal_parity")
     training_dataset, test_dataset = datasets[:-1], datasets[-1]
 
@@ -105,7 +105,8 @@ if __name__ == '__main__':
     # Evolve other reservoirs with similar dynamics
     if confirm('Use readout layer to evolve rbn_reservoir?'):
         reservoir_problem = RBNReservoirProblem(
-            task_size, connectivity, readout, test_dataset)
+            rbn_reservoir.n_nodes, rbn_reservoir.connectivity,
+            readout, test_dataset)
 
         generation, adults = solve(reservoir_problem)
 

@@ -66,9 +66,9 @@ class RBNNode(mdp.Node):
         if rules is not None:
             self.rules = rules
         else:
-            rules = generate_rules(self.n_nodes,
-                                   self.connectivity,
-                                   self.expected_p)
+            self.rules = generate_rules(self.n_nodes,
+                                        self.connectivity,
+                                        self.expected_p)
 
     def _get_supported_dtypes(self):
         return ['int']
