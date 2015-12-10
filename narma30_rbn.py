@@ -4,7 +4,6 @@ import mdp
 import pickle
 import math
 from datetime import datetime
-import numpy as np
 
 from utils import confirm, default_input
 from rbn import rbn_node, complexity_measures
@@ -38,7 +37,6 @@ def rbn_genome_size(n_nodes, connectivity):
 #plt.title('Test output')
 
 
-
 def execute_dataset(flow, (reservoir_input, expected_output)):
     reservoir = flow[0]
     readout = flow[1]
@@ -57,8 +55,14 @@ def execute_dataset(flow, (reservoir_input, expected_output)):
     if raw_input('Pickle reservoir and readout layers? [y/N] ').strip() == 'y':
         date = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
         pickle_dir = 'pickle_dumps'
-        reservoir_path = '{}/{}-reservoir'.format(pickle_dir, date)
-        readout_path = '{}/{}-readout'.format(pickle_dir, date)
+
+        reservoir_postfix = raw_input("Reservoir postfix: ")
+        reservoir_path = ('{}/{}-reservoir-[{}]'
+                          .format(pickle_dir, date, reservoir_postfix))
+
+        readout_postfix = raw_input("Readout postfix: ")
+        readout_path = ('{}/{}-readout-[{}]'
+                        .format(pickle_dir, date, readout_postfix))
 
         pickle.dump(reservoir, open(reservoir_path, 'w'))
         pickle.dump(readout, open(readout_path, 'w'))
@@ -109,6 +113,10 @@ if __name__ == '__main__':
             readout, test_dataset)
 
         generation, adults = solve(reservoir_problem)
+        date = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
+        pickle.dump(adults,
+                     open('pickle_dumps/evolved_rbns/{}-rbn'.format(date), 'w'))
+
 
 #plt.plot(actual_output, 'r')
 #plt.plot(expected_output, 'b')
