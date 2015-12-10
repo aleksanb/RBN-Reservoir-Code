@@ -13,7 +13,7 @@ class RBNReservoirProblem(Problem):
     children_pool_size = 40
     adult_pool_size = 40
     fitness_satisfaction_threshold = 0.98
-    maximum_generations = 100
+    maximum_generations = 200
 
     select_adults = generational_mixing()
     select_parent = tournament_selection(k=8)

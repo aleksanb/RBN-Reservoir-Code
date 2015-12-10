@@ -13,6 +13,11 @@ from tasks import temporal
 from rbn_reservoir_problem import RBNReservoirProblem
 from ea.solve import solve
 
+import log
+import logging
+
+log.setup(logging.DEBUG)
+
 
 def rbn_genome_size(n_nodes, connectivity):
     bits_for_input_connection = 1
@@ -25,8 +30,6 @@ def rbn_genome_size(n_nodes, connectivity):
                      bits_for_transition_table)
 
     return bits_per_node * n_nodes
-
-gotta_remember = 3
 
 
 #plt.matshow(test_dataset[0][:10], cmap=plt.cm.gray)
@@ -60,65 +63,51 @@ def execute_dataset(flow, (reservoir_input, expected_output)):
         pickle.dump(reservoir, open(reservoir_path, 'w'))
         pickle.dump(readout, open(readout_path, 'w'))
 
-import log
-import logging
 
-log.setup(logging.DEBUG)
-logging.info('Starting experiment!!!')
+if __name__ == '__main__':
+    # Create datasets
+    datasets = default_input('Datasets', 10)
+    task_size = default_input('Dataset length', 200)
+    window_size = default_input('Window size', 3)
 
-datasets = temporal.create_datasets(
-    1,
-    task_size=200,
-    window_size=3,
-    dataset_type='temporal_parity')
+    datasets = temporal.create_datasets(
+        datasets,
+        task_size=task_size,
+        window_size=gotta_remember,
+        dataset_type="temporal_parity")
+    training_dataset, test_dataset = datasets[:-1], datasets[-1]
 
-working_readout =\
-    pickle.load(open('pickle_dumps/2015-12-09 17:52:31.228077-readout', 'r'))
+    # Create or load reservoir and readout layer
+    loaded_from_pickle = confirm('Load RBN+Readout from pickle?')
+    if loaded_from_pickle:
+        reservoir_path = 'pickle_dumps/' + raw_input('Reservoir pickle: ')
+        readout_path = 'pickle_dumps/' + raw_input('Readout pickle: ')
+        rbn_reservoir = pickle.load(open(reservoir_path, 'r'))
+        readout = pickle.load(open(readout_path, 'r'))
+    else:
+        connectivity = default_input('connectivity', 2)
+        n_nodes = default_input('n_nodes', 100)
+        input_connectivity = default_input('input_connectivity', 50)
+        rbn_reservoir = rbn_node.RBNNode(connectivity=connectivity,
+                                         output_dim=n_nodes,
+                                         input_connectivity=input_connectivity)
 
-reservoir_problem = RBNReservoirProblem(
-    100,
-    2,
-    working_readout,
-    datasets[0])
+        readout = Oger.nodes.RidgeRegressionNode(input_dim=n_nodes,
+                                                 output_dim=1,
+                                                 verbose=True)
 
-generation, adults = solve(reservoir_problem)
+    # Train and execute reservoir system if freshly created
+    flow = mdp.Flow([rbn_reservoir, readout], verbose=1)
+    if not loaded_from_pickle:
+        flow.train([None, training_dataset])
+        execute_dataset(flow, test_dataset)
 
+    # Evolve other reservoirs with similar dynamics
+    if confirm('Use readout layer to evolve rbn_reservoir?'):
+        reservoir_problem = RBNReservoirProblem(
+            task_size, connectivity, readout, test_dataset)
 
-#if __name__ == '__main__':
-#    datasets = default_input('Datasets', 10)
-#    task_size = default_input('Dataset length', 200)
-#    delay = default_input('Delay', 0)
-#
-#    datasets = temporal.create_datasets(
-#        datasets,
-#        task_size=task_size,
-#        delay=delay,
-#        window_size=gotta_remember,
-#        dataset_type="temporal_parity")
-#    training_dataset, test_dataset = datasets[:-1], datasets[-1]
-#
-#    loaded_from_pickle = confirm('Load RBN+Readout from pickle?')
-#    if loaded_from_pickle:
-#        reservoir_path = 'pickle_dumps/' + raw_input('Reservoir pickle: ')
-#        readout_path = 'pickle_dumps/' + raw_input('Readout pickle: ')
-#        rbn_reservoir = pickle.load(open(reservoir_path, 'r'))
-#        readout = pickle.load(open(readout_path, 'r'))
-#    else:
-#        connectivity = default_input('connectivity', 2)
-#        n_nodes = default_input('n_nodes', 100)
-#        input_connectivity = default_input('input_connectivity', 50)
-#        rbn_reservoir = rbn_node.RBNNode(connectivity=connectivity,
-#                                         output_dim=n_nodes,
-#                                         input_connectivity=input_connectivity)
-#
-#        readout = Oger.nodes.RidgeRegressionNode(input_dim=n_nodes,
-#                                                 output_dim=1,
-#                                                 verbose=True)
-#    flow = mdp.Flow([rbn_reservoir, readout], verbose=1)
-#    if not loaded_from_pickle:
-#        flow.train([None, training_dataset])
-#
-#    execute_dataset(flow, test_dataset)
+        generation, adults = solve(reservoir_problem)
 
 #plt.plot(actual_output, 'r')
 #plt.plot(expected_output, 'b')
