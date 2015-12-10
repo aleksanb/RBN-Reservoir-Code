@@ -1,6 +1,6 @@
 import logging
 import json
-#import arrow
+import arrow
 from ea.genotypes import SymbolVectorGenotype
 import os.path
 try:
@@ -53,7 +53,7 @@ def solve(problem, state_file_path=''):
                         'children': map(lambda x: x.serialize(), children),
                         'adults': map(lambda x: x.serialize(), adults),
                         'generation': generation,
-                        'time': "yolo",  # arrow.utcnow().isoformat(),
+                        'time': arrow.utcnow().isoformat(),
                     }))
                     did_persist = True
                     logger.debug('Persist complete.')
