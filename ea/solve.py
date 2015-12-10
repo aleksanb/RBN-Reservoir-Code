@@ -88,10 +88,12 @@ def solve(problem, state_file_path=''):
 
         generation += 1
 
-    adults.sort(key=lambda x: x.fitness)
     fitnesses = [x.fitness for x in adults]
     mean = np.mean(fitnesses)
     std = np.std(fitnesses)
-    logging.info('Current generation fitness mean: %s' % mean)
-    logging.info('Current generation fitness std: %s' % std)
+
+    logging.info('Simulation finished at generation %s', generation)
+    logging.info('Best individual: %s' % adults[-1])
+    logging.info('Fitness mean: %s, std: %s' % (mean, std))
+
     return generation, adults
