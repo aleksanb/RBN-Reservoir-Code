@@ -1,7 +1,6 @@
 import Oger
 import mdp
 #import matplotlib.pyplot as plt
-import pickle
 import math
 import numpy as np
 
@@ -56,10 +55,8 @@ if __name__ == '__main__':
     training_dataset, test_dataset = datasets[:-1], datasets[-1]
 
     # Create or load reservoir and readout layer
-    loaded_from_pickle = confirm('Load RBN+Readout from pickle?')
-    if loaded_from_pickle:
-        rbn_reservoir = load('RBN reservoir pickle:')
-        readout = load('Readout pickle:')
+    if confirm('Use existing readout layer?'):
+        readout = load('Readout pickle:', folder='working_flows')
     else:
         connectivity = default_input('connectivity', 2)
         n_nodes = default_input('n_nodes', 100)
@@ -72,9 +69,8 @@ if __name__ == '__main__':
                                                  output_dim=1,
                                                  verbose=True)
 
-    # Train and execute reservoir system if freshly created
-    flow = mdp.Flow([rbn_reservoir, readout], verbose=1)
-    if not loaded_from_pickle:
+        # Train and execute newly created flow
+        flow = mdp.Flow([rbn_reservoir, readout], verbose=1)
         flow.train([None, training_dataset])
 
         reservoir_input, expected_output = test_dataset
@@ -82,13 +78,12 @@ if __name__ == '__main__':
         for output in actual_output:
             output[0] = 1 if output[0] > 0.5 else 0
 
-        #complexity = complexity_measures.measure_computational_capability(
-        #    reservoir, 100, 3)
         errors = sum(actual_output != expected_output)
         accuracy = 1 - float(errors) / len(actual_output)
         logging.info("Accuracy: {} ({} error(s) out of {})"
                      .format(accuracy, errors[0], len(actual_output)))
 
+        # Optionally dump newly created flow
         if confirm('Pickle reservoir and readout layer?'):
             flow_description = '{}-{}-[ACC:{}]'.format(
                 problem_description,
@@ -100,10 +95,12 @@ if __name__ == '__main__':
                  folder='working_flows')
 
     # Evolve other reservoirs with similar dynamics
-    if confirm('Use readout layer to evolve rbn_reservoir?'):
+    if confirm('Use readout layer to evolve similar rbn_reservoirs?'):
+        connectivity = default_input('Connectivity', 2)
+        n_nodes = readout.input_dim
+
         reservoir_problem = RBNReservoirProblem(
-            rbn_reservoir.n_nodes, rbn_reservoir.connectivity,
-            readout, test_dataset)
+            n_nodes, connectivity, readout, test_dataset)
 
         generation, adults = solve(reservoir_problem)
 
@@ -111,14 +108,16 @@ if __name__ == '__main__':
         mean = np.mean(fitnesses)
         std = np.std(fitnesses)
 
-        description = '{}-{}-[ACC:{}-MEAN:{}-STD:{}-GEN:{}]'.format(
+        logging.info('Top 5 fitnesses: {}'.format(fitnesses[-5:]))
+
+        description = '{}-[N:{}-K:{}]-[ACC:{}-MEAN:{}-STD:{}-GEN:{}]'.format(
             problem_description,
-            rbn_reservoir.describe(),
+            n_nodes,
+            connectivity,
             fitnesses[-1],
             mean,
             std,
             generation)
-
         dump(adults, description, folder='evolved_rbns')
 
         logging.info('GA run completed, adults pickled')

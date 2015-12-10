@@ -12,8 +12,12 @@ def default_input(name, default):
     return int(raw_input('{} ({}): '.format(name, default))
                or default)
 
-def load(query, pickle_dir='pickle_dumps/'):
-    name = pickle_dumps + raw_input(query + ' ')
+def load(query, folder=None, pickle_dir='pickle_dumps/'):
+    if folder:
+        pickle_dir = pickle_dir + folder + '/'
+
+    name = pickle_dir + raw_input(
+        '{} (from {}) '.format(query, pickle_dir))
     obj = pickle.load(open(name, 'r'))
 
     logger.info('Loaded pickle: {}'.format(name))
