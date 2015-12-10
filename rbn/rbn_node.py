@@ -110,3 +110,7 @@ class RBNNode(mdp.Node):
 
     def reset_state(self):
         self.state = create_empty_state(self.n_nodes)
+
+    def describe(self):
+        return "[N:{}-K:{}-I:{}]".format(
+            self.n_nodes, self.connectivity, self.input_connectivity)

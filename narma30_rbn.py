@@ -3,10 +3,10 @@ import mdp
 #import matplotlib.pyplot as plt
 import pickle
 import math
-from datetime import datetime
+import numpy as np
 
-from utils import confirm, default_input
-from rbn import rbn_node, complexity_measures
+from utils import confirm, default_input, dump, load
+from rbn import rbn_node
 from tasks import temporal
 
 from rbn_reservoir_problem import RBNReservoirProblem
@@ -37,57 +37,29 @@ def rbn_genome_size(n_nodes, connectivity):
 #plt.title('Test output')
 
 
-def execute_dataset(flow, (reservoir_input, expected_output)):
-    reservoir = flow[0]
-    readout = flow[1]
-
-    actual_output = flow.execute(reservoir_input)
-    for output in actual_output:
-        output[0] = 1 if output[0] > 0.5 else 0
-
-    complexity = complexity_measures.measure_computational_capability(
-        reservoir, 100, 3)
-    errors = sum(actual_output != expected_output)
-    accuracy = 1 - float(errors) / len(actual_output)
-    print "Accuracy: {} ({} errors out of {}, reservoir complexity: {})"\
-        .format(accuracy, errors, len(actual_output), complexity)
-
-    if raw_input('Pickle reservoir and readout layers? [y/N] ').strip() == 'y':
-        date = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-        pickle_dir = 'pickle_dumps'
-
-        reservoir_postfix = raw_input("Reservoir postfix: ")
-        reservoir_path = ('{}/{}-reservoir-[{}]'
-                          .format(pickle_dir, date, reservoir_postfix))
-
-        readout_postfix = raw_input("Readout postfix: ")
-        readout_path = ('{}/{}-readout-[{}]'
-                        .format(pickle_dir, date, readout_postfix))
-
-        pickle.dump(reservoir, open(reservoir_path, 'w'))
-        pickle.dump(readout, open(readout_path, 'w'))
-
-
 if __name__ == '__main__':
     # Create datasets
+    dataset_type = "temporal_density"
     datasets = default_input('Datasets', 10)
     task_size = default_input('Dataset length', 200)
     window_size = default_input('Window size', 3)
+
+    problem_description = '[{}-{}-{}-{}]'.format(
+        dataset_type, datasets, task_size, window_size)
+    logging.info(problem_description)
 
     datasets = temporal.create_datasets(
         datasets,
         task_size=task_size,
         window_size=window_size,
-        dataset_type="temporal_parity")
+        dataset_type=dataset_type)
     training_dataset, test_dataset = datasets[:-1], datasets[-1]
 
     # Create or load reservoir and readout layer
     loaded_from_pickle = confirm('Load RBN+Readout from pickle?')
     if loaded_from_pickle:
-        reservoir_path = 'pickle_dumps/' + raw_input('Reservoir pickle: ')
-        readout_path = 'pickle_dumps/' + raw_input('Readout pickle: ')
-        rbn_reservoir = pickle.load(open(reservoir_path, 'r'))
-        readout = pickle.load(open(readout_path, 'r'))
+        rbn_reservoir = load('RBN reservoir pickle:')
+        readout = load('Readout pickle:')
     else:
         connectivity = default_input('connectivity', 2)
         n_nodes = default_input('n_nodes', 100)
@@ -104,7 +76,28 @@ if __name__ == '__main__':
     flow = mdp.Flow([rbn_reservoir, readout], verbose=1)
     if not loaded_from_pickle:
         flow.train([None, training_dataset])
-        execute_dataset(flow, test_dataset)
+
+        reservoir_input, expected_output = test_dataset
+        actual_output = flow.execute(reservoir_input)
+        for output in actual_output:
+            output[0] = 1 if output[0] > 0.5 else 0
+
+        #complexity = complexity_measures.measure_computational_capability(
+        #    reservoir, 100, 3)
+        errors = sum(actual_output != expected_output)
+        accuracy = 1 - float(errors) / len(actual_output)
+        logging.info("Accuracy: {} ({} error(s) out of {})"
+                     .format(accuracy, errors[0], len(actual_output)))
+
+        if confirm('Pickle reservoir and readout layer?'):
+            flow_description = '{}-{}-[ACC:{}]'.format(
+                problem_description,
+                rbn_reservoir.describe(),
+                accuracy)
+            dump(rbn_reservoir, flow_description + '-reservoir',
+                 folder='working_flows')
+            dump(readout, flow_description + '-readout',
+                 folder='working_flows')
 
     # Evolve other reservoirs with similar dynamics
     if confirm('Use readout layer to evolve rbn_reservoir?'):
@@ -113,10 +106,22 @@ if __name__ == '__main__':
             readout, test_dataset)
 
         generation, adults = solve(reservoir_problem)
-        date = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-        pickle.dump(adults,
-                     open('pickle_dumps/evolved_rbns/{}-rbn'.format(date), 'w'))
 
+        fitnesses = [x.fitness for x in adults]
+        mean = np.mean(fitnesses)
+        std = np.std(fitnesses)
+
+        description = '{}-{}-[ACC:{}-MEAN:{}-STD:{}-GEN:{}]'.format(
+            problem_description,
+            rbn_reservoir.describe(),
+            fitnesses[-1],
+            mean,
+            std,
+            generation)
+
+        dump(adults, description, folder='evolved_rbns')
+
+        logging.info('GA run completed, adults pickled')
 
 #plt.plot(actual_output, 'r')
 #plt.plot(expected_output, 'b')
