@@ -1,16 +1,23 @@
 import pickle
 import logging
+import os
 from datetime import datetime
 
 logger = logging.getLogger()
 
-def confirm(message):
-    return raw_input(message + ' [y/N] ').strip() == 'y'
+
+def user_denies(message):
+    return raw_input(message + ' [Y/n] ').strip() == 'n'
+
+
+def user_confirms(message):
+    return raw_input(message + ' [N/y] ').strip() == 'y'
 
 
 def default_input(name, default):
-    return int(raw_input('{} ({}): '.format(name, default))
+    return int(raw_input('{} (default: {}): '.format(name, default))
                or default)
+
 
 def load(query, folder=None, pickle_dir='pickle_dumps/'):
     if folder:
@@ -24,9 +31,13 @@ def load(query, folder=None, pickle_dir='pickle_dumps/'):
 
     return obj
 
+
 def dump(obj, name, folder=None, pickle_dir='pickle_dumps/'):
     if folder:
         pickle_dir = pickle_dir + folder + '/'
+
+    if not os.path.exists(pickle_dir):
+        os.makedirs(pickle_dir)
 
     date = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
     name = '{}{}-{}'.format(pickle_dir, date, name)
