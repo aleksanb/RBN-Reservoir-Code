@@ -2,7 +2,8 @@ import Oger
 import mdp
 import numpy as np
 
-from utils import user_confirms, user_denies, default_input, dump, load
+from utils import user_confirms, user_denies, default_input
+from utils import dump, load, log_git_info
 from rbn import rbn_node
 from tasks import temporal
 
@@ -24,6 +25,7 @@ if __name__ == '__main__':
             os.makedirs(prefixed_path)
 
     log.setup(logging.DEBUG, path=prefixed_path)
+    log_git_info()
 
     # Create datasets
     dataset_type = default_input('Dataset [temporal_parity, temporal_density]',

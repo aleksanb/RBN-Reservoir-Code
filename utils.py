@@ -1,6 +1,7 @@
 import pickle
 import logging
 import os
+import subprocess
 from datetime import datetime
 
 logger = logging.getLogger()
@@ -51,3 +52,15 @@ def dump(obj, name, folder=None, pickle_dir='pickle_dumps/'):
 
     pickle.dump(obj, open(name, 'w'))
     logger.info('Created pickle: {}'.format(name))
+
+
+def git(*args):
+    gitproc = subprocess.Popen(['git'] + list(args), stdout=subprocess.PIPE)
+    stdout, _ = gitproc.communicate()
+    return stdout.strip()
+
+
+def log_git_info():
+    logger.info('git revision: %s' % git('rev-parse', 'HEAD'))
+    if git('diff'):
+        logger.warn('Git working directory not clean!')
