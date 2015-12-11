@@ -1,6 +1,5 @@
 import Oger
 import mdp
-#import matplotlib.pyplot as plt
 import numpy as np
 
 from utils import user_confirms, user_denies, default_input, dump, load
@@ -15,17 +14,13 @@ import logging
 
 log.setup(logging.DEBUG)
 
-#plt.matshow(test_dataset[0][:10], cmap=plt.cm.gray)
-#plt.title('Test input')
-#plt.matshow(test_dataset[1][:10], cmap=plt.cm.gray)
-#plt.title('Test output')
-
 if __name__ == '__main__':
     # Set pickle working dir
     folder = raw_input('Set working directory for experiment: ') or None
 
     # Create datasets
-    dataset_type = "temporal_parity"
+    dataset_type = default_input('Dataset [temporal_parity, temporal_density]',
+                                 'temporal_parity')
     n_datasets = default_input('Datasets', 10)
     task_size = default_input('Dataset length', 200)
     window_size = default_input('Window size', 3)

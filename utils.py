@@ -15,8 +15,15 @@ def user_confirms(message):
 
 
 def default_input(name, default):
-    return int(raw_input('{} (default: {}): '.format(name, default))
-               or default)
+    query = raw_input('{} (default: {}): '.format(name, default))
+
+    if query:
+        if type(default) is int:
+            return int(query)
+        elif type(default) is str:
+            return str(query)
+
+    return default
 
 
 def load(query, folder=None, pickle_dir='pickle_dumps/'):
