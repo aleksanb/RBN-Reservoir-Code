@@ -63,14 +63,18 @@ class ColoredFormatter(BaseFormatter):
                        'white')
 
 
-def setup(level, name=''):
+def setup(level, name='', path=None):
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
-    handler = logging.FileHandler((name or 'out') + '.log')
-    handler.setLevel(logging.DEBUG)
+    name = (name or 'out') + '.log'
+    if path:
+        name = path + name
 
+    handler = logging.FileHandler(name)
+    handler.setLevel(logging.DEBUG)
     handler.setFormatter(BaseFormatter())
+
     logger.addHandler(handler)
 
     if level <= logging.DEBUG:

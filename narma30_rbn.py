@@ -11,12 +11,19 @@ from ea.solve import solve
 
 import log
 import logging
-
-log.setup(logging.DEBUG)
+import os
 
 if __name__ == '__main__':
     # Set pickle working dir
     folder = raw_input('Set working directory for experiment: ') or None
+
+    prefixed_path = ''
+    if folder:
+        prefixed_path = 'pickle_dumps/{}/'.format(folder)
+        if not os.path.exists(prefixed_path):
+            os.makedirs(prefixed_path)
+
+    log.setup(logging.DEBUG, path=prefixed_path)
 
     # Create datasets
     dataset_type = default_input('Dataset [temporal_parity, temporal_density]',
@@ -89,7 +96,7 @@ if __name__ == '__main__':
             reservoir_problem = RBNReservoirProblem(
                 n_nodes, connectivity, readout, test_dataset)
 
-            generation, adults = solve(reservoir_problem)
+            generation, adults = solve(reservoir_problem, path=prefixed_path)
 
             fitnesses = [x.fitness for x in adults]
             top3 = fitnesses[-3:]

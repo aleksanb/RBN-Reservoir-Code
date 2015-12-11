@@ -11,7 +11,10 @@ except:
 logger = logging.getLogger()
 
 
-def solve(problem, state_file_path=''):
+def solve(problem, path='', state_file_path=''):
+    state_file = 'state.dat'
+    if path:
+        state_file = path + state_file
 
     children = None
     adults = None
@@ -48,7 +51,7 @@ def solve(problem, state_file_path=''):
             logger.debug('Persisting state...')
             did_persist = False
             try:
-                with open('state.dat', 'a') as f:
+                with open(state_file, 'a') as f:
                     f.write('%s\n' % json.dumps({
                         'children': map(lambda x: x.serialize(), children),
                         'adults': map(lambda x: x.serialize(), adults),
