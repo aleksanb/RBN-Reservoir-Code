@@ -19,7 +19,7 @@ class RBNReservoirProblem(Problem):
     select_parent = tournament_selection(k=8)
 
     crossover = genome_component_crossover(p=0.5)
-    mutate = per_genome_component_mutation(probability=0.01)
+    mutate = per_genome_component_mutation(probability=0.1)
 
     def __init__(self,
                  n_nodes,
