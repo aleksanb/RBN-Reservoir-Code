@@ -65,11 +65,9 @@ class RBNReservoirProblem(Problem):
         if n_nodes < 2 ** 2 ** connectivity:
             print "n < 2**2**k :("
 
-    def phenotype(self, genotype):
-        genotype_to_phenotype(genotype, self.n_nodes, self.connectivity)
-
     def calculate_fitness(self, genotype):
-        rbn_reservoir = self.phenotype(genotype)
+        rbn_reservoir = genotype_to_phenotype(
+            genotype, self.n_nodes, self.connectivity)
         rbn_reservoir.reset_state()
         flow = mdp.Flow([rbn_reservoir, self.readout], verbose=1)
 
