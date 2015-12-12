@@ -9,6 +9,34 @@ from rbn.rbn_node import RBNNode
 import mdp
 
 
+def genotype_to_phenotype(genotype, n_nodes, connectivity):
+    input_connections = []
+    connections = []
+    rules = []
+
+    for i in range(n_nodes):
+        chunk = genotype[i:i+connectivity+2]
+
+        connected = chunk[0] % 2 == 1
+        neighbors = chunk[1:1+connectivity]
+
+        rule = chunk[-1] % 2 ** 2 ** connectivity
+        rule = ("{:0%db}" % 2 ** connectivity).format(rule)
+        rule = map(int, rule)
+
+        if connected:
+            input_connections.append(i)
+
+        connections.append(neighbors)
+        rules.append(rule)
+
+    return RBNNode(connectivity=connectivity,
+                   output_dim=n_nodes,
+                   input_connections=input_connections,
+                   connections=connections,
+                   rules=rules)
+
+
 class RBNReservoirProblem(Problem):
     children_pool_size = 40
     adult_pool_size = 40
@@ -38,31 +66,7 @@ class RBNReservoirProblem(Problem):
             print "n < 2**2**k :("
 
     def phenotype(self, genotype):
-        input_connections = []
-        connections = []
-        rules = []
-
-        for i in range(self.n_nodes):
-            chunk = genotype[i:i+self.connectivity+2]
-
-            connected = chunk[0] % 2 == 1
-            neighbors = chunk[1:1+self.connectivity]
-
-            rule = chunk[-1] % 2 ** 2 ** self.connectivity
-            rule = ("{:0%db}" % 2 ** self.connectivity).format(rule)
-            rule = map(int, rule)
-
-            if connected:
-                input_connections.append(i)
-
-            connections.append(neighbors)
-            rules.append(rule)
-
-        return RBNNode(connectivity=self.connectivity,
-                       output_dim=self.n_nodes,
-                       input_connections=input_connections,
-                       connections=connections,
-                       rules=rules)
+        genotype_to_phenotype(genotype, self.n_nodes, self.connectivity)
 
     def calculate_fitness(self, genotype):
         rbn_reservoir = self.phenotype(genotype)

@@ -63,7 +63,7 @@ class ColoredFormatter(BaseFormatter):
                        'white')
 
 
-def setup(level, name='', path=None):
+def setup(level, name='', path=''):
     logger = logging.getLogger(name)
     logger.setLevel(level)
 

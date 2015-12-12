@@ -3,7 +3,7 @@ import mdp
 import numpy as np
 
 from utils import user_confirms, user_denies, default_input
-from utils import dump, log_git_info, glob_load
+from utils import dump, log_git_info, glob_load, get_working_dir
 from rbn import rbn_node
 from tasks import temporal
 
@@ -12,25 +12,18 @@ from ea.solve import solve
 
 import log
 import logging
-import os
 
 if __name__ == '__main__':
     # Set pickle working dir
-    folder = raw_input('Set working directory for experiment: ') or None
+    working_dir = get_working_dir()
 
-    prefixed_path = ''
-    if folder:
-        prefixed_path = 'pickle_dumps/{}/'.format(folder)
-        if not os.path.exists(prefixed_path):
-            os.makedirs(prefixed_path)
-
-    log.setup(logging.DEBUG, path=prefixed_path)
+    log.setup(logging.DEBUG, path=working_dir)
     log_git_info()
 
     # Create datasets
     use_existing_dataset = user_confirms('Use existing dataset in folder?')
     if use_existing_dataset:
-        test_dataset = glob_load(prefixed_path + '*-dataset')
+        test_dataset, _ = glob_load(working_dir + '*-dataset')[0]
         dataset_description = '[dataset_from_folder]'
     else:
         dataset_type = default_input(
@@ -51,12 +44,12 @@ if __name__ == '__main__':
         logging.info(dataset_description)
 
     if not use_existing_dataset and not user_denies('Pickle test dataset?'):
-        dump(test_dataset, dataset_description + '-dataset', folder=folder)
+        dump(test_dataset, dataset_description + '-dataset',
+             folder=working_dir)
 
     # Create or load reservoir and readout layer
     if user_confirms('Use readout layer from folder?'):
-        readout = glob_load(prefixed_path + '*readout')
-        #readout = load('Readout pickle:', folder=folder)
+        readout, _ = glob_load(working_dir + '*readout')[0]
     else:
         connectivity = default_input('connectivity', 2)
         n_nodes = default_input('n_nodes', 100)
@@ -90,9 +83,9 @@ if __name__ == '__main__':
                 rbn_reservoir.describe(),
                 accuracy)
             dump(rbn_reservoir, flow_description + '-reservoir',
-                 folder=folder)
+                 folder=working_dir)
             dump(readout, flow_description + '-readout',
-                 folder=folder)
+                 folder=working_dir)
 
     # Evolve other reservoirs with similar dynamics
     if not user_denies('Use readout layer to evolve similar rbn_reservoirs?'):
@@ -104,7 +97,7 @@ if __name__ == '__main__':
             reservoir_problem = RBNReservoirProblem(
                 n_nodes, connectivity, readout, test_dataset)
 
-            generation, adults = solve(reservoir_problem, path=prefixed_path)
+            generation, adults = solve(reservoir_problem, path=working_dir)
 
             fitnesses = [x.fitness for x in adults]
             top3 = fitnesses[-3:]
@@ -113,7 +106,7 @@ if __name__ == '__main__':
             std = np.std(fitnesses)
 
             description = (
-                '{}-[N:{}-K:{}]-[TOP:{}-MEAN:{}-STD:{}-GEN:{}]-[{}of{}]'
+                '{}-[N:{}-K:{}]-[TOP:{}-MEAN:{}-STD:{}-GEN:{}]-[{}of{}]-evolved'
                 .format(dataset_description,
                         n_nodes,
                         connectivity,
@@ -123,7 +116,7 @@ if __name__ == '__main__':
                         generation,
                         i,
                         n_runs))
-            dump(adults, description, folder=folder)
+            dump(adults, description, folder=working_dir)
 
             logging.info(
                 'GA run {} of {} completed, adults pickled'.format(i, n_runs))

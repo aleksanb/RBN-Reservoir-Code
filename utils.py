@@ -8,6 +8,17 @@ from datetime import datetime
 logger = logging.getLogger()
 
 
+def fst(t):
+    return t[0]
+
+
+def snd(t):
+    return t[1]
+
+def lst(t):
+    return t[-1]
+
+
 def user_denies(message):
     return raw_input(message + ' [Y/n] ').strip() == 'n'
 
@@ -24,30 +35,46 @@ def default_input(name, default):
             return int(query)
         elif type(default) is str:
             return str(query)
+        elif type(default) is float:
+            return float(query)
 
     return default
 
 
+def get_working_dir(prefix='pickle_dumps'):
+    directory = default_input('Set working directory', '')
+
+    working_dir = '{}/{}/'.format(prefix, directory)
+    if not os.path.exists(working_dir):
+        if not user_denies('Directory {} does not exist. Create it?'
+                           .format(working_dir)):
+            os.makedirs(working_dir)
+            logger.info('Created folder: {}'.format(working_dir))
+
+    return working_dir
+
+
 def glob_load(pattern):
     matches = glob.glob(pattern)
-    if len(matches) != 1:
+
+    if len(matches) == 0:
         logger.warn(
-            'More than one file matching pattern {}!'.format(pattern))
+            'No files matching pattern {}!'.format(pattern))
         return None
 
-    obj = pickle.load(open(matches[0], 'r'))
+    results = [(pickle.load(open(match, 'r')), match)
+               for match in matches]
 
-    logger.info('Loaded pickle: {}'.format(matches[0]))
+    logger.info('Loaded {} pickle(s): {}'.format(
+        len(matches),
+        matches))
 
-    return obj
+    return results
 
 
-def load(query, folder=None, pickle_dir='pickle_dumps/'):
-    if folder:
-        pickle_dir = pickle_dir + folder + '/'
-
-    name = pickle_dir + raw_input(
-        '{} (from {}) '.format(query, pickle_dir))
+def load(query, folder=''):
+    name = folder + raw_input(
+        '{} (from {}) '.format(query, folder))
     obj = pickle.load(open(name, 'r'))
 
     logger.info('Loaded pickle: {}'.format(name))
@@ -55,15 +82,9 @@ def load(query, folder=None, pickle_dir='pickle_dumps/'):
     return obj
 
 
-def dump(obj, name, folder=None, pickle_dir='pickle_dumps/'):
-    if folder:
-        pickle_dir = pickle_dir + folder + '/'
-
-    if not os.path.exists(pickle_dir):
-        os.makedirs(pickle_dir)
-
+def dump(obj, name, folder=''):
     date = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-    name = '{}{}-{}'.format(pickle_dir, date, name)
+    name = '{}{}-{}'.format(folder, date, name)
 
     pickle.dump(obj, open(name, 'w'))
     logger.info('Created pickle: {}'.format(name))
