@@ -28,22 +28,25 @@ if __name__ == '__main__':
     log_git_info()
 
     # Create datasets
-    dataset_type = default_input('Dataset [temporal_parity, temporal_density]',
-                                 'temporal_parity')
-    n_datasets = default_input('Datasets', 10)
-    task_size = default_input('Dataset length', 200)
-    window_size = default_input('Window size', 3)
+    if user_confirms('Use existing dataset?'):
+        test_dataset = load('Existing dataset:', folder=folder)
+    else:
+        dataset_type = default_input(
+            'Dataset [temporal_parity, temporal_density]', 'temporal_parity')
+        n_datasets = default_input('Datasets', 10)
+        task_size = default_input('Dataset length', 200)
+        window_size = default_input('Window size', 3)
 
-    datasets = temporal.create_datasets(
-        n_datasets,
-        task_size=task_size,
-        window_size=window_size,
-        dataset_type=dataset_type)
-    training_dataset, test_dataset = datasets[:-1], datasets[-1]
+        datasets = temporal.create_datasets(
+            n_datasets,
+            task_size=task_size,
+            window_size=window_size,
+            dataset_type=dataset_type)
+        training_dataset, test_dataset = datasets[:-1], datasets[-1]
 
-    dataset_description = '[{}-{}-{}-{}]'.format(
-        dataset_type, n_datasets, task_size, window_size)
-    logging.info(dataset_description)
+        dataset_description = '[{}-{}-{}-{}]'.format(
+            dataset_type, n_datasets, task_size, window_size)
+        logging.info(dataset_description)
 
     if not user_denies('Pickle test dataset?'):
         dump(test_dataset, dataset_description + '-dataset', folder=folder)
