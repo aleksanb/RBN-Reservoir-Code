@@ -110,17 +110,20 @@ if __name__ == '__main__':
             std = np.std(fitnesses)
 
             description = (
-                '{}-[N:{}-K:{}]-[TOP:{}-MEAN:{}-STD:{}-GEN:{}]'
+                '{}-[N:{}-K:{}]-[TOP:{}-MEAN:{}-STD:{}-GEN:{}]-[{}of{}]'
                 .format(dataset_description,
                         n_nodes,
                         connectivity,
                         top3,
                         mean,
                         std,
-                        generation))
+                        generation,
+                        i,
+                        n_runs))
             dump(adults, description, folder=folder)
 
-            logging.info('GA run % completed, adults pickled', i)
+            logging.info(
+                'GA run {} of {} completed, adults pickled'.format(i, n_runs))
 
 #plt.plot(actual_output, 'r')
 #plt.plot(expected_output, 'b')
