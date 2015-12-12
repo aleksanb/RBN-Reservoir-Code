@@ -49,7 +49,7 @@ def visualize_rbn(rbn):
 
 
 def deviation_stats(description, numbers):
-    logger.info('Stats for {}'.format(description))
+    logger.info('Stats for {} ({} items)'.format(description, len(numbers)))
     logger.info(
         'Largest: {}, Smallest: {}, Mean: {}, Std: {}'
         .format(max(numbers), min(numbers), np.mean(numbers), np.std(numbers)))
