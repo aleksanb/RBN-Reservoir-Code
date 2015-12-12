@@ -11,6 +11,23 @@ except:
 logger = logging.getLogger()
 
 
+def do_logging(adults, generation):
+    logger.info('Generation: %s' % generation)
+    logger.info('Current generation best individual: %s' % adults[-1])
+
+    fitnesses = [x.fitness for x in adults]
+    mean = np.mean(fitnesses)
+    std = np.std(fitnesses)
+
+    q1 = fitnesses[len(fitnesses) * 1 / 4 - 1]
+    q2 = fitnesses[len(fitnesses) * 2 / 4 - 1]
+    q3 = fitnesses[len(fitnesses) * 3 / 4 - 1]
+
+    logging.info('Current generation fitness mean: %s' % mean)
+    logging.info('Current generation fitness std: %s' % std)
+    logging.info('Current generation quantiles: %s' % [q1, q2, q3])
+
+
 def solve(problem, path='', state_file_path=''):
     state_file = 'state.dat'
     if path:
@@ -67,15 +84,6 @@ def solve(problem, path='', state_file_path=''):
         else:
             just_loaded = False
 
-        logger.info('Generation %s' % generation)
-        if adults:
-            logger.info('Best individual so far: %s' % adults[-1])
-            fitnesses = [x.fitness for x in adults]
-            mean = np.mean(fitnesses)
-            std = np.std(fitnesses)
-            logging.info('Current generation fitness mean: %s' % mean)
-            logging.info('Current generation fitness std: %s' % std)
-
         for child in children:
             child.fitness = problem.calculate_fitness(child)
         adults = problem.select_adults(adults, children,
@@ -91,12 +99,8 @@ def solve(problem, path='', state_file_path=''):
 
         generation += 1
 
-    fitnesses = [x.fitness for x in adults]
-    mean = np.mean(fitnesses)
-    std = np.std(fitnesses)
+        do_logging(adults, generation)
 
-    logging.info('Simulation finished at generation %s', generation)
-    logging.info('Best individual: %s' % adults[-1])
-    logging.info('Fitness mean: %s, std: %s' % (mean, std))
+    logger.info('Simulation completed!')
 
     return generation, adults
