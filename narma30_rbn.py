@@ -3,7 +3,7 @@ import mdp
 import numpy as np
 
 from utils import user_confirms, user_denies, default_input
-from utils import dump, load, log_git_info
+from utils import dump, log_git_info, glob_load
 from rbn import rbn_node
 from tasks import temporal
 
@@ -28,8 +28,10 @@ if __name__ == '__main__':
     log_git_info()
 
     # Create datasets
-    if user_confirms('Use existing dataset?'):
-        test_dataset = load('Existing dataset:', folder=folder)
+    use_existing_dataset = user_confirms('Use existing dataset in folder?')
+    if use_existing_dataset:
+        test_dataset = glob_load(prefixed_path + '*-dataset')
+        dataset_description = '[dataset_from_folder]'
     else:
         dataset_type = default_input(
             'Dataset [temporal_parity, temporal_density]', 'temporal_parity')
@@ -48,12 +50,13 @@ if __name__ == '__main__':
             dataset_type, n_datasets, task_size, window_size)
         logging.info(dataset_description)
 
-    if not user_denies('Pickle test dataset?'):
+    if not use_existing_dataset and not user_denies('Pickle test dataset?'):
         dump(test_dataset, dataset_description + '-dataset', folder=folder)
 
     # Create or load reservoir and readout layer
-    if user_confirms('Use existing readout layer?'):
-        readout = load('Readout pickle:', folder=folder)
+    if user_confirms('Use readout layer from folder?'):
+        readout = glob_load(prefixed_path + '*readout')
+        #readout = load('Readout pickle:', folder=folder)
     else:
         connectivity = default_input('connectivity', 2)
         n_nodes = default_input('n_nodes', 100)

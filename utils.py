@@ -2,6 +2,7 @@ import pickle
 import logging
 import os
 import subprocess
+import glob
 from datetime import datetime
 
 logger = logging.getLogger()
@@ -25,6 +26,20 @@ def default_input(name, default):
             return str(query)
 
     return default
+
+
+def glob_load(pattern):
+    matches = glob.glob(pattern)
+    if len(matches) != 1:
+        logger.warn(
+            'More than one file matching pattern {}!'.format(pattern))
+        return None
+
+    obj = pickle.load(open(matches[0], 'r'))
+
+    logger.info('Loaded pickle: {}'.format(matches[0]))
+
+    return obj
 
 
 def load(query, folder=None, pickle_dir='pickle_dumps/'):
