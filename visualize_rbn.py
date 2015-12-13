@@ -107,7 +107,7 @@ def visualize_rbn_state(n=100, working_dir=None):
     if not working_dir:
         working_dir = get_working_dir()
 
-    rbn, _ = glob_load(working_dir + '*-reservoir')[0]
+    rbn, rbn_name = glob_load(working_dir + '*-reservoir')[0]
     rbn.reset_state()
 
     if not user_denies('Perturb?'):
@@ -123,17 +123,19 @@ def visualize_rbn_state(n=100, working_dir=None):
     plt.matshow(rbn_states, cmap=plt.cm.gray)
     plt.title('RBN states')
 
-    plt.matshow(test_input, cmap=plt.cm.gray)
-    plt.title('Reservoir input')
+    name = raw_input('Name: ')
+    plt.savefig('plotS/' + name, bbox_inches='tight')
 
-    input_connections = np.zeros((1, rbn.n_nodes))
-    input_connections[0, rbn.input_connections] = 1
+    #plt.matshow(test_input, cmap=plt.cm.gray)
+    #plt.title('Reservoir input')
 
-    plt.matshow(input_connections, cmap=plt.cm.gray)
-    plt.title('Input connections')
+    #input_connections = np.zeros((1, rbn.n_nodes))
+    #input_connections[0, rbn.input_connections] = 1
 
-    plt.show()
+    #plt.matshow(input_connections, cmap=plt.cm.gray)
+    #plt.title('Input connections')
 
+    #plt.show()
 
 if __name__ == '__main__':
     log.setup(logging.DEBUG)
