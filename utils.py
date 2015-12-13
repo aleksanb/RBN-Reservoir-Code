@@ -4,6 +4,7 @@ import os
 import subprocess
 import glob
 from datetime import datetime
+import numpy as np
 
 logger = logging.getLogger()
 
@@ -15,6 +16,7 @@ def fst(t):
 def snd(t):
     return t[1]
 
+
 def lst(t):
     return t[-1]
 
@@ -25,6 +27,13 @@ def user_denies(message):
 
 def user_confirms(message):
     return raw_input(message + ' [N/y] ').strip() == 'y'
+
+
+def deviation_stats(description, numbers):
+    logger.info('Stats for {} ({} items)'.format(description, len(numbers)))
+    logger.info(
+        'Largest: {}, Smallest: {}, Mean: {}, Std: {}'
+        .format(max(numbers), min(numbers), np.mean(numbers), np.std(numbers)))
 
 
 def default_input(name, default):

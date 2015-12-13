@@ -1,17 +1,16 @@
-from tasks import temporal
 import matplotlib.pyplot as plt
+
 import networkx as nx
-from utils import *
+from utils import get_working_dir, glob_load
 import numpy as np
 import json
 
-from rbn_reservoir_problem import genotype_to_phenotype
 from itertools import repeat
+import mdp
 
 import log
 import logging
 
-log.setup(logging.DEBUG)
 
 def visualize_rbn(rbn):
     internal_edges = []
@@ -41,47 +40,17 @@ def visualize_rbn(rbn):
                            #edge_color='r')
 
 #nx.draw_networkx_edges(G,pos,
-                               #edgelist=[(0,1),(1,2),(2,3),(3,0)],
-                                                      #width=8,alpha=0.5,edge_color='r')
+            #edgelist=[(0,1),(1,2),(2,3),(3,0)],
+            #width=8,alpha=0.5,edge_color='r')
     #nx.draw(G, pos)
 
     plt.show()
 
 
-def deviation_stats(description, numbers):
-    logger.info('Stats for {} ({} items)'.format(description, len(numbers)))
-    logger.info(
-        'Largest: {}, Smallest: {}, Mean: {}, Std: {}'
-        .format(max(numbers), min(numbers), np.mean(numbers), np.std(numbers)))
-
-
-def load_rbns_from_ea():
-    working_dir = get_working_dir()
-    ea_runs = map(fst, glob_load(working_dir + '*-evolved'))
-
-    #genotypes = load('Select EA run: ', folder=working_dir)
-    #genotypes = pickle.load(
-    #    open('pickle_dumps/chosen-1/2015-12-11-22:59:09-[temporal_parity-10-200-3]-[N:100-K:2]-[TOP:[0.995, 0.995, 0.92]-MEAN:0.609875-STD:0.171931990551-GEN:32]', 'r'))
-
-    best_genomes = map(lst, ea_runs)
-    rbns = [genotype_to_phenotype(genome, 100, 2)
-            for genome in best_genomes]
-
-    deviation_stats('Fitness', [g.fitness for g in best_genomes])
-    deviation_stats('Input connectivity', [len(rbn.input_connections) for rbn in rbns])
-
-    #min_fitness = 0.98  # default_input('Filter criteria:', 0.98)
-    #rbns = [genotype_to_phenotype(g, 100, 2)
-    #        for g in genotypes
-    #        if g.fitness >= min_fitness]
-
-    #visualize_rbn(rbns[-1])
-
-
 def visualize_dataset(n=30):
     working_dir = get_working_dir()
 
-    test_dataset, filename = glob_load(working_dir + '*-dataset')
+    test_dataset, filename = glob_load(working_dir + '*-dataset')[0]
 
     plt.matshow(test_dataset[0][:n], cmap=plt.cm.gray)
     plt.title(filename + ': reservoir input.')
@@ -90,6 +59,38 @@ def visualize_dataset(n=30):
     plt.title(filename + ': expected output.')
 
     plt.show()
+
+
+def visualize_correctness(n=25):
+    working_dir = 'pickle_dumps/final-1/'  # get_working_dir()
+
+    (reservoir_input, expected_output), _ =\
+        glob_load(working_dir + '*-dataset')[0]
+    rbn_reservoir, _ = glob_load(working_dir + '*-reservoir')[0]
+    readout, _ = glob_load(working_dir + '*-readout')[0]
+
+    rbn_reservoir.reset_state()
+    flow = mdp.Flow([rbn_reservoir, readout], verbose=1)
+
+    actual_output = flow.execute(reservoir_input)
+    for output in actual_output:
+        output[0] = 1 if output[0] > 0.5 else 0
+
+    errors = sum(actual_output != expected_output)
+    accuracy = 1 - float(errors) / len(actual_output)
+
+    plt.title('Reservoir performance')
+    plt.plot(actual_output[:n], 'y', linewidth=1.5)
+    plt.plot(expected_output[:n], 'b', linewidth=1.5)
+    plt.legend(['Actual output', 'Expected output'])
+
+    plt.savefig('temp-2.pdf', bbox_inches='tight')
+
+
+log.setup(logging.DEBUG)
+
+visualize_dataset()
+#visualize_correctness()
 
 
 def plot_fitness():
@@ -105,7 +106,6 @@ def plot_fitness():
             #            'time': arrow.utcnow().isoformat(),
 
 
-load_rbns_from_ea()
 #visualize_dataset()
 
 #if __name__ == '__main__':

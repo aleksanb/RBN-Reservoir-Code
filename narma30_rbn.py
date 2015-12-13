@@ -73,8 +73,9 @@ if __name__ == '__main__':
 
         errors = sum(actual_output != expected_output)
         accuracy = 1 - float(errors) / len(actual_output)
+
         logging.info("Accuracy: {} ({} error(s) out of {})"
-                     .format(accuracy, errors[0], len(actual_output)))
+                     .format(accuracy, errors, len(actual_output)))
 
         # Optionally dump newly created flow
         if not user_denies('Pickle reservoir and readout layer?'):
@@ -120,10 +121,6 @@ if __name__ == '__main__':
 
             logging.info(
                 'GA run {} of {} completed, adults pickled'.format(i, n_runs))
-
-#plt.plot(actual_output, 'r')
-#plt.plot(expected_output, 'b')
-#plt.show()
 
 #plt.matshow(input_connections, cmap=plt.cm.gray)
 #plt.title('Input connections')
