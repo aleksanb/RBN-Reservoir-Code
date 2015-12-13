@@ -121,9 +121,3 @@ if __name__ == '__main__':
 
             logging.info(
                 'GA run {} of {} completed, adults pickled'.format(i, n_runs))
-
-#plt.matshow(input_connections, cmap=plt.cm.gray)
-#plt.title('Input connections')
-#plt.matshow(rbn_states, cmap=plt.cm.gray)
-#plt.title('RBN states')
-#plt.show()

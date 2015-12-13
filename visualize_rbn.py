@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 import networkx as nx
-from utils import get_working_dir, glob_load
+from utils import get_working_dir, glob_load, user_denies, user_confirms
 import numpy as np
 import json
 
@@ -61,8 +61,9 @@ def visualize_dataset(n=30):
     plt.show()
 
 
-def visualize_correctness(n=25):
-    working_dir = 'pickle_dumps/final-1/'  # get_working_dir()
+def visualize_correctness(n=25, working_dir=None):
+    if not working_dir:
+        working_dir = get_working_dir()
 
     (reservoir_input, expected_output), _ =\
         glob_load(working_dir + '*-dataset')[0]
@@ -87,28 +88,62 @@ def visualize_correctness(n=25):
     plt.savefig('temp-2.pdf', bbox_inches='tight')
 
 
-log.setup(logging.DEBUG)
-
-visualize_dataset()
-#visualize_correctness()
-
-
-def plot_fitness():
-    with open('state.dat', 'r') as states:
-        plots = []
-        for line in states.readlines():
-            state = json.loads(line)
-            print state['generation']
-            #print line
-            #            'children': map(lambda x: x.serialize(), children),
-            #            'adults': map(lambda x: x.serialize(), adults),
-            #            'generation': generation,
-            #            'time': arrow.utcnow().isoformat(),
+#def plot_fitness():
+#    with open('state.dat', 'r') as states:
+#        plots = []
+#        for line in states.readlines():
+#            state = json.loads(line)
+#            print state['generation']
+#            #print line
+#            #            'children': map(lambda x: x.serialize(), children),
+#            #            'adults': map(lambda x: x.serialize(), adults),
+#            #            'generation': generation,
+#            #            'time': arrow.utcnow().isoformat(),
 
 
 #visualize_dataset()
 
-#if __name__ == '__main__':
+def visualize_rbn_state(n=100, working_dir=None):
+    if not working_dir:
+        working_dir = get_working_dir()
+
+    rbn, _ = glob_load(working_dir + '*-reservoir')[0]
+    rbn.reset_state()
+
+    if not user_denies('Perturb?'):
+        test_data, _ = glob_load(working_dir + '*-dataset')[0]
+        test_input, _ = test_data
+        test_input = test_input[:n]
+    else:
+        test_input = np.zeros((n, 1))
+        rbn.should_perturb = False
+
+    rbn_states = rbn._execute(test_input)
+
+    plt.matshow(rbn_states, cmap=plt.cm.gray)
+    plt.title('RBN states')
+
+    plt.matshow(test_input, cmap=plt.cm.gray)
+    plt.title('Reservoir input')
+
+    input_connections = np.zeros((1, rbn.n_nodes))
+    input_connections[0, rbn.input_connections] = 1
+
+    plt.matshow(input_connections, cmap=plt.cm.gray)
+    plt.title('Input connections')
+
+    plt.show()
+
+
+if __name__ == '__main__':
+    log.setup(logging.DEBUG)
+
+    visualize_rbn_state(
+        working_dir=get_working_dir())
+
+    #visualize_correctness()
+
+
 #    plot_fitness()
 #    import sys
 #    sys.exit()
