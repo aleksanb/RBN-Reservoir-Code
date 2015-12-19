@@ -11,6 +11,8 @@ import mdp
 import log
 import logging
 
+import re
+
 
 def visualize_rbn(rbn):
     internal_edges = []
@@ -47,16 +49,24 @@ def visualize_rbn(rbn):
     plt.show()
 
 
-def visualize_dataset(n=30):
-    working_dir = get_working_dir()
+def visualize_dataset(n=30, working_dir=None):
+    if not working_dir:
+        working_dir = get_working_dir()
 
     test_dataset, filename = glob_load(working_dir + '*-dataset')[0]
 
-    plt.matshow(test_dataset[0][:n], cmap=plt.cm.gray)
-    plt.title(filename + ': reservoir input.')
+    dataset_meta = re.search(r"\[(.*)\]", filename).groups()[0]
 
-    plt.matshow(test_dataset[1][:n], cmap=plt.cm.gray)
-    plt.title(filename + ': expected output.')
+    reservoir_input = np.transpose(test_dataset[0][:n])
+    expected_output = np.transpose(test_dataset[1][:n])
+
+    plt.matshow(reservoir_input, cmap=plt.cm.gray)
+    plt.axis('off')
+    plt.savefig('plots/' + dataset_meta + '-input.pdf', bbox_inches='tight')
+
+    plt.matshow(expected_output, cmap=plt.cm.gray)
+    plt.axis('off')
+    plt.savefig('plots/' + dataset_meta + '-output.pdf', bbox_inches='tight')
 
     plt.show()
 
@@ -121,10 +131,12 @@ def visualize_rbn_state(n=100, working_dir=None):
     rbn_states = rbn._execute(test_input)
 
     plt.matshow(rbn_states, cmap=plt.cm.gray)
-    plt.title('RBN states')
+    plt.xlabel('State of node n in RBN')
+    plt.gca().xaxis.set_label_position('top')
+    plt.ylabel('Time')
 
-    name = raw_input('Name: ')
-    plt.savefig('plotS/' + name, bbox_inches='tight')
+    plt.savefig(raw_input('Name: '), bbox_inches='tight')
+    plt.show()
 
     #plt.matshow(test_input, cmap=plt.cm.gray)
     #plt.title('Reservoir input')
@@ -140,8 +152,53 @@ def visualize_rbn_state(n=100, working_dir=None):
 if __name__ == '__main__':
     log.setup(logging.DEBUG)
 
-    visualize_rbn_state(
-        working_dir=get_working_dir())
+    visualize_dataset()
+
+    import sys
+    sys.exit()
+
+    from rbn import rbn_node
+
+    rbn_reservoir_ordered = rbn_node.RBNNode(
+            connectivity=2,
+            should_perturb=False,
+            output_dim=30,
+            input_connectivity=15)
+    #rbn_reservoir_critical = rbn_node.RBNNode(
+    #        connectivity=2,
+    #        should_perturb=False,
+    #        output_dim=30,
+    #        input_connectivity=15)
+    #rbn_reservoir_chaotic = rbn_node.RBNNode(
+    #        connectivity=4,
+    #        should_perturb=False,
+    #        output_dim=30,
+    #        input_connectivity=15)
+
+
+    test_input = np.zeros((60, 1))
+    ordered = rbn_reservoir_ordered._execute(test_input)
+    #critical= rbn_reservoir_critical._execute(test_input)
+    #chaotic = rbn_reservoir_chaotic._execute(test_input)
+
+    plt.matshow(ordered, cmap=plt.cm.gray)
+    plt.axis('off')
+    plt.savefig('plots/critical-phase-new.pdf', bbox_inches='tight')
+
+    #plt.matshow(critical, cmap=plt.cm.gray)
+    #plt.axis('off')
+    #plt.savefig('plots/critical-phase.pdf', bbox_inches='tight')
+
+    #plt.matshow(chaotic, cmap=plt.cm.gray)
+    #plt.axis('off')
+    #plt.savefig('plots/chaotic-phase.pdf', bbox_inches='tight')
+
+
+    #if user_confirms('Visualize rbn state?'):
+    #visualize_rbn_state()
+
+    #if user_confirms('Visualize dataset?'):
+    #    visualize_dataset()
 
     #visualize_correctness()
 

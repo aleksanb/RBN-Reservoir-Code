@@ -13,6 +13,37 @@ from ea.solve import solve
 import log
 import logging
 
+
+def create_dataset():
+    dataset_type = default_input(
+        'Dataset [temporal_parity, temporal_density]', 'temporal_parity')
+    n_datasets = default_input('Datasets', 10)
+    task_size = default_input('Dataset length', 200)
+    window_size = default_input('Window size', 3)
+
+    datasets = temporal.create_datasets(
+        n_datasets,
+        task_size=task_size,
+        window_size=window_size,
+        dataset_type=dataset_type)
+
+    dataset_description = '[{}-{}-{}-{}]'.format(
+        dataset_type, n_datasets, task_size, window_size)
+
+    return datasets, dataset_description
+
+
+def create_reservoir():
+    connectivity = default_input('connectivity', 2)
+    n_nodes = default_input('n_nodes', 100)
+    input_connectivity = default_input('input_connectivity', 50)
+    rbn_reservoir = rbn_node.RBNNode(connectivity=connectivity,
+                                     output_dim=n_nodes,
+                                     input_connectivity=input_connectivity)
+
+    return rbn_reservoir
+
+
 if __name__ == '__main__':
     # Set pickle working dir
     working_dir = get_working_dir()
@@ -26,22 +57,8 @@ if __name__ == '__main__':
         test_dataset, _ = glob_load(working_dir + '*-dataset')[0]
         dataset_description = '[dataset_from_folder]'
     else:
-        dataset_type = default_input(
-            'Dataset [temporal_parity, temporal_density]', 'temporal_parity')
-        n_datasets = default_input('Datasets', 10)
-        task_size = default_input('Dataset length', 200)
-        window_size = default_input('Window size', 3)
-
-        datasets = temporal.create_datasets(
-            n_datasets,
-            task_size=task_size,
-            window_size=window_size,
-            dataset_type=dataset_type)
+        datasets, dataset_description = create_dataset()
         training_dataset, test_dataset = datasets[:-1], datasets[-1]
-
-        dataset_description = '[{}-{}-{}-{}]'.format(
-            dataset_type, n_datasets, task_size, window_size)
-        logging.info(dataset_description)
 
     if not use_existing_dataset and not user_denies('Pickle test dataset?'):
         dump(test_dataset, dataset_description + '-dataset',
@@ -51,16 +68,11 @@ if __name__ == '__main__':
     if user_confirms('Use readout layer from folder?'):
         readout, _ = glob_load(working_dir + '*readout')[0]
     else:
-        connectivity = default_input('connectivity', 2)
-        n_nodes = default_input('n_nodes', 100)
-        input_connectivity = default_input('input_connectivity', 50)
-        rbn_reservoir = rbn_node.RBNNode(connectivity=connectivity,
-                                         output_dim=n_nodes,
-                                         input_connectivity=input_connectivity)
-
-        readout = Oger.nodes.RidgeRegressionNode(input_dim=n_nodes,
-                                                 output_dim=1,
-                                                 verbose=True)
+        rbn_reservoir = create_reservoir()
+        readout = Oger.nodes.RidgeRegressionNode(
+            input_dim=rbn_reservoir.output_dim,
+            output_dim=1,
+            verbose=True)
 
         # Train and execute newly created flow
         flow = mdp.Flow([rbn_reservoir, readout], verbose=1)
@@ -74,8 +86,8 @@ if __name__ == '__main__':
         errors = sum(actual_output != expected_output)
         accuracy = 1 - float(errors) / len(actual_output)
 
-        logging.info("Accuracy: {} ({} error(s) out of {})"
-                     .format(accuracy, errors, len(actual_output)))
+        logging.info("Accuracy: {} on {} items."
+                     .format(accuracy, len(reservoir_input)))
 
         # Optionally dump newly created flow
         if not user_denies('Pickle reservoir and readout layer?'):

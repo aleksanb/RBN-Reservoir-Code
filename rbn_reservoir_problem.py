@@ -37,6 +37,17 @@ def genotype_to_phenotype(genotype, n_nodes, connectivity):
                    rules=rules)
 
 
+def calculate_accuracy(flow, (reservoir_input, expected_output)):
+    actual_output = flow.execute(reservoir_input)
+    for output in actual_output:
+        output[0] = 1 if output[0] > 0.5 else 0
+
+    errors = sum(actual_output != expected_output)
+    accuracy = 1 - float(errors) / len(actual_output)
+
+    return accuracy
+
+
 class RBNReservoirProblem(Problem):
     children_pool_size = 40
     adult_pool_size = 40
@@ -72,12 +83,4 @@ class RBNReservoirProblem(Problem):
         rbn_reservoir.reset_state()
         flow = mdp.Flow([rbn_reservoir, self.readout], verbose=1)
 
-        reservoir_input, expected_output = self.dataset
-        actual_output = flow.execute(reservoir_input)
-        for output in actual_output:
-            output[0] = 1 if output[0] > 0.5 else 0
-
-        errors = sum(actual_output != expected_output)
-        accuracy = 1 - float(errors) / len(actual_output)
-
-        return accuracy
+        return calculate_accuracy(flow, self.dataset)
