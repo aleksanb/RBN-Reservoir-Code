@@ -44,18 +44,21 @@ class RBNNode(mdp.Node):
         self.n_runs_after_perturb = n_runs_after_perturb
         self.should_perturb = should_perturb
         self.heterogenous = heterogenous
-        self.input_connectivity = input_connectivity or self.n_nodes
 
         # Initialize state and connections
         self.state = create_empty_state(self.n_nodes)
 
         if input_connections is not None:
+            self.input_connectivity = len(input_connections)
             self.input_connections = input_connections
-        else:
+        elif input_connectivity is not None:
+            self.input_connectivity = input_connectivity
             self.input_connections =\
                 numpy.random.choice(range(self.n_nodes),
                                     self.input_connectivity,
                                     replace=False)
+        else:
+            raise mdp.NodeException('Gotta have either connections of connectivity')
 
         if connections is not None:
             self.connections = connections
