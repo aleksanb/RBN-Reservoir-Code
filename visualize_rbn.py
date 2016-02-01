@@ -131,12 +131,13 @@ def visualize_rbn_state(n=100, working_dir=None):
     rbn_states = rbn._execute(test_input)
 
     plt.matshow(rbn_states, cmap=plt.cm.gray)
-    plt.xlabel('State of node n in RBN')
-    plt.gca().xaxis.set_label_position('top')
-    plt.ylabel('Time')
+    plt.axis('off')
+    #plt.xlabel('State of node n in RBN')
+    #plt.gca().xaxis.set_label_position('top')
+    #plt.ylabel('Time')
 
     plt.savefig(raw_input('Name: '), bbox_inches='tight')
-    plt.show()
+    #plt.show()
 
     #plt.matshow(test_input, cmap=plt.cm.gray)
     #plt.title('Reservoir input')
@@ -152,7 +153,7 @@ def visualize_rbn_state(n=100, working_dir=None):
 if __name__ == '__main__':
     log.setup(logging.DEBUG)
 
-    visualize_dataset()
+    visualize_rbn_state()
 
     import sys
     sys.exit()

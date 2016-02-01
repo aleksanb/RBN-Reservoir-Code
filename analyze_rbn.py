@@ -26,6 +26,39 @@ def load_rbns_from_ea():
     return best_genomes, rbns
 
 
+def load_rbns_from_erb(directory, remember):
+    rbn_distribution, name = glob_load(directory + '*distribution')[0]
+
+    scatterplot = ["x y"]
+
+    for accuracy, rbn in rbn_distribution:
+        cc = measure_computational_capability(rbn, 100, remember)
+        scatterplot.append("{} {}".format(cc, accuracy))
+
+    distribution = {}
+    distplot = ["\\myboxplot{"]
+    for accuracy, rbn in rbn_distribution:
+        ic = rbn.input_connectivity
+        if ic not in distribution:
+            distribution[ic] = []
+
+        distribution[ic].append(accuracy)
+
+    for i, l in enumerate(sorted(distribution.keys())):
+        distplot.append("% L: {}".format(i))
+        distplot.append("\\addplot[boxplot]")
+        distplot.append("table[row sep=\\\\, y index=0] {")
+        distplot.append("data")
+        for fitness in distribution[l]:
+            distplot.append("{} \\\\".format(fitness))
+
+        distplot.append("};")
+
+    distplot.append("}}{{{}}}".format(10.0 / max(distribution.keys())))
+
+    return '\n'.join(scatterplot), '\n'.join(distplot)
+
+
 def degree_distribution(rbn):
     node_indegrees = defaultdict(int)
     for from_node, to_node in rbn.connections:
@@ -64,10 +97,11 @@ def estimate_reservoir_distribution(n_samples, n_nodes, connectivity,
                 flow.train([None, training_dataset])
 
                 accuracy = calculate_accuracy(flow, test_dataset)
-                cc = measure_computational_capability(reservoir, 100, window_size)
-                result = [input_connectivity, accuracy, cc]
-                results.append(result)
-                logging.info(result)
+                #cc = measure_computational_capability(reservoir, 100, window_size)
+                #result = [input_connectivity, accuracy, cc]
+                results.append([accuracy, reservoir])
+                #results.append(result)
+                logging.info(accuracy)
             except Exception as e:
                 logging.error(e)
                 logging.error('Exception occured, Continuing anyways')
@@ -95,7 +129,7 @@ def erb():
     dump(distribution, name, folder=working_dir)
 
 
-def computational_power_scatter(filename):
+def computational_power_scatter(rbns):
     with open(filename) as f:
         print "x y"
         for line in f:
@@ -103,49 +137,49 @@ def computational_power_scatter(filename):
             print numbers[2], numbers[1]
 
 
-def distribution_to_plot(filename):
-    distribution = {}
-    with open(filename) as f:
-        for line in f:
-            arr = eval(line)
-            L = arr[0]
-            if not L in distribution:
-                distribution[L] = []
-
-            distribution[L].append(arr[1:])
-
-    print "\\myboxplot{"
-
-    for i, l in enumerate(sorted(distribution.keys())):
-        values = distribution[l]
-        accuracies = map(fst, values)
-        complexities = map(snd, values)
-
-        median = np.median(accuracies)
-        lowerq = np.percentile(accuracies, 25)
-        upperq = np.percentile(accuracies, 75)
-        if abs(lowerq - upperq) < 0.001:
-            lowerq -= 0.004
-
-        upperw = np.max(accuracies)
-        lowerw = np.min(accuracies)
-
-        boxplot =\
-"""% L: {}
-\\addplot[
-boxplot prepared={{
-    draw position={},
-    median={},
-    upper quartile={},
-    lower quartile={},
-    upper whisker={},
-    lower whisker={}
-}},
-] coordinates {{}};""".format(l, i, median, upperq, lowerq, upperw, lowerw)
-
-        print boxplot
-
-    print "}}{{{}}}".format(10.0 / max(distribution.keys()))
+#def distribution_to_plot(filename):
+#    distribution = {}
+#    with open(filename) as f:
+#        for line in f:
+#            arr = eval(line)
+#            L = arr[0]
+#            if not L in distribution:
+#                distribution[L] = []
+#
+#            distribution[L].append(arr[1:])
+#
+#    print "\\myboxplot{"
+#
+#    for i, l in enumerate(sorted(distribution.keys())):
+#        values = distribution[l]
+#        accuracies = map(fst, values)
+#        complexities = map(snd, values)
+#
+#        median = np.median(accuracies)
+#        lowerq = np.percentile(accuracies, 25)
+#        upperq = np.percentile(accuracies, 75)
+#        if abs(lowerq - upperq) < 0.001:
+#            lowerq -= 0.004
+#
+#        upperw = np.max(accuracies)
+#        lowerw = np.min(accuracies)
+#
+#        boxplot =\
+#"""% L: {}
+#\\addplot[
+#boxplot prepared={{
+#    draw position={},
+#    median={},
+#    upper quartile={},
+#    lower quartile={},
+#    upper whisker={},
+#    lower whisker={}
+#}},
+#] coordinates {{}};""".format(l, i, median, upperq, lowerq, upperw, lowerw)
+#
+#        print boxplot
+#
+#    print "}}{{{}}}".format(10.0 / max(distribution.keys()))
 
 
 if __name__ == '__main__':
@@ -154,10 +188,40 @@ if __name__ == '__main__':
     #distribution_to_plot()
     #erb()
 
+    rbn, _ = glob_load('pickle_dumps/70input-2/*-reservoir')[0]
+    ccs = [measure_computational_capability(rbn, 100, 3) for _ in range(20)]
+    print ccs, np.median(ccs), np.mean(ccs)
+
+    #postfix = default_input('Postfix?', '-3-1')
+    #remember = int(postfix.split("-")[1]) - 1
+
+    #scatter, box = load_rbns_from_erb('pickle_dumps/c-distribution-100' + postfix + '/', remember)
+
+    #print scatter
+
+    #sc = open('pickle_dumps/c-distribution-100' + postfix +
+    #          '/computational-power-100' + postfix + '.dat', 'w')
+    #sc.write(scatter)
+    #sc.close()
+
+    #bx = open('pickle_dumps/c-distribution-100' + postfix +
+    #          '/distribution-100' + postfix + '.tex', 'w')
+    #bx.write(box)
+    #bx.close()
+
+
     genomes, rbns = load_rbns_from_ea()
-    print "% connectivity"
+    complexities = []
     for rbn in rbns:
-        print rbn.input_connectivity
+        print "eyy llmao"
+        cc = measure_computational_capability(rbn, 100, 3)
+        complexities.append(cc)
+
+    #print '\n'.join([str(c) for c in complexities])
+
+    #print "% connectivity"
+    #for rbn in rbns:
+    #    print rbn.input_connectivity
 
     #deviation_stats('Fitness', [g.fitness for g in genomes])
     #deviation_stats('Input connectivity', [len(rbn.input_connections)

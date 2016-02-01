@@ -23,8 +23,8 @@ def measure_separation(reservoir, input_size, n_separated_ago):
 
     input_1 = np.random.randint(2, size=(input_size, 1))
     input_2 = np.copy(input_1)
-    separation_idx = input_size - 1 - n_separated_ago
-    input_2[separation_idx:] = 1 - input_2[separation_idx:]
+    separation_idx = input_size - n_separated_ago
+    input_2[:separation_idx] = 1 - input_2[:separation_idx]
 
     return measure_perturbance_spread(reservoir, input_1, input_2)
 
