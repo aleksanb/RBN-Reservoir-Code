@@ -1,0 +1,27 @@
+{
+    "system": {
+        "n_cores": 6
+    },
+    "datasets": {
+        "training": {
+            "n_datasets": 1,
+            "task_size": 4000,
+            "window_size": 3,
+            "dataset_type": "temporal_parity"
+        },
+        "test": {
+            "n_datasets": 1,
+            "task_size": 200,
+            "window_size": 3,
+            "dataset_type": "temporal_parity"
+        }
+    },
+    "reservoir": {
+        "connectivity": 3
+    },
+    "distribution": {
+        "n_nodes_range": [10, 100, 10],
+        "input_connectivity_step_size": 10,
+        "n_samples": 10
+    }
+}
