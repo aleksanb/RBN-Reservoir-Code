@@ -7,6 +7,8 @@ import multiprocessing as mp
 import numpy as np
 from argparse import ArgumentParser
 import json
+import operator
+import os
 
 
 if __name__ == '__main__':
@@ -21,6 +23,9 @@ if __name__ == '__main__':
 
     n_cores = config['system']['n_cores']
 
+    outfile = config['logging']['outfile']
+    outdir = config['logging']['outdir']
+
     training_input, training_output =\
             create_datasets(**config['datasets']['training'])[0]
     test_input, test_output =\
@@ -32,7 +37,8 @@ if __name__ == '__main__':
     n_samples = config['distribution']['n_samples']
     input_connectivity_step_size = config['distribution']['input_connectivity_step_size']
 
-    def calculate_accuracy((n_nodes, input_connectivity)):
+    def calculate_accuracy((n_nodes, input_connectivity), callback=None):
+        accuracies = []
         print "START-{}-{}".format(n_nodes, input_connectivity)
         for sample in range(n_samples):
             rbn_reservoir = RBNNode(connectivity=reservoir_connectivity,
@@ -50,15 +56,35 @@ if __name__ == '__main__':
 
             errors = sum(predictions != test_output)
             accuracy = 1 - float(errors) / len(predictions)
-            print("Accuracy: {} on {} items."
-                         .format(accuracy, len(predictions)))
-        print "END-{}-{}".format(n_nodes, input_connectivity)
 
+            accuracies.append(accuracy)
+        print "END-{}-{}".format(n_nodes, input_connectivity)
+        return accuracies
+
+    reservoir_distribution = {}
     pool = mp.Pool(n_cores)
     for n_nodes in n_nodes_range:
-        input_connectivity_range = range(n_nodes_range[0], n_nodes + 1, input_connectivity_step_size)
-        result = pool.map_async(
-            calculate_accuracy,
-            ((n_nodes, input_connectivity) for input_connectivity in input_connectivity_range))
+        reservoir_distribution[n_nodes] = {}
+        input_connectivity_range = range(n_nodes_range[0],
+                                         n_nodes + 1,
+                                         input_connectivity_step_size)
+        for input_connectivity in input_connectivity_range:
+            reservoir_distribution[n_nodes][input_connectivity] = pool.apply_async(
+                calculate_accuracy,
+                [(n_nodes, input_connectivity)])
 
-    result.wait()
+    pool.close()
+    pool.join()
+
+    for n in reservoir_distribution:
+        for ic in reservoir_distribution[n]:
+            reservoir_distribution[n][ic] = reservoir_distribution[n][ic].get()
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    with open('/'.join([outdir, outfile]), 'w') as f:
+        json.dump(reservoir_distribution, f, indent=4, sort_keys=True)
+
+    with open('/'.join([outdir, 'config.json']), 'w') as f:
+        json.dump(config, f, indent=4, sort_keys=True)

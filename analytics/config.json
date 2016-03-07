@@ -2,6 +2,10 @@
     "system": {
         "n_cores": 6
     },
+    "logging": {
+        "outfile": "result.json",
+        "outdir": "initial_100x10x30"
+    },
     "datasets": {
         "training": {
             "n_datasets": 1,
@@ -20,8 +24,8 @@
         "connectivity": 3
     },
     "distribution": {
-        "n_nodes_range": [10, 100, 10],
+        "n_nodes_range": [10, 101, 10],
         "input_connectivity_step_size": 10,
-        "n_samples": 10
+        "n_samples": 30
     }
 }
