@@ -29,7 +29,7 @@ def create_datasets(n_datasets,
                     task_size=1000,
                     delay=0,
                     window_size=2,
-                    dataset_type="temporal_parity"):
+                    dataset_type=None):
 
     label_function = {
         'temporal_parity': temporal_parity,

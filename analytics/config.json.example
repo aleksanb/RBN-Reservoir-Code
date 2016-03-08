@@ -2,10 +2,6 @@
     "system": {
         "n_cores": 6
     },
-    "logging": {
-        "outfile": "result.json",
-        "outdir": "initial_100x10x30"
-    },
     "datasets": {
         "training": {
             "n_datasets": 1,

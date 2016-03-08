@@ -13,18 +13,15 @@ import os
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('config', help='path to configuration file')
+    parser.add_argument('directory', help='directory containing configuration file')
     arguments = parser.parse_args()
 
-    with open(arguments.config) as config_file:
+    with open('/'.join([arguments.directory + 'config.json'])) as config_file:
         conf = config_file.read()
         print conf
         config = json.loads(conf)
 
     n_cores = config['system']['n_cores']
-
-    outfile = config['logging']['outfile']
-    outdir = config['logging']['outdir']
 
     training_input, training_output =\
             create_datasets(**config['datasets']['training'])[0]
@@ -65,7 +62,7 @@ if __name__ == '__main__':
     pool = mp.Pool(n_cores)
     for n_nodes in n_nodes_range:
         reservoir_distribution[n_nodes] = {}
-        input_connectivity_range = range(n_nodes_range[0],
+        input_connectivity_range = range(0,
                                          n_nodes + 1,
                                          input_connectivity_step_size)
         for input_connectivity in input_connectivity_range:
@@ -80,11 +77,5 @@ if __name__ == '__main__':
         for ic in reservoir_distribution[n]:
             reservoir_distribution[n][ic] = reservoir_distribution[n][ic].get()
 
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-
-    with open('/'.join([outdir, outfile]), 'w') as f:
+    with open('/'.join([arguments.directory, 'result.json']), 'w') as f:
         json.dump(reservoir_distribution, f, indent=4, sort_keys=True)
-
-    with open('/'.join([outdir, 'config.json']), 'w') as f:
-        json.dump(config, f, indent=4, sort_keys=True)

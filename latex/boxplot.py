@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import json
 
-def make_plot(columns):
+def make_plot(columns, input_connectivity_step_size):
     boxplot_preamble = "\\myboxplot{\n"
     boxplot_template=\
 """
@@ -11,7 +11,7 @@ data
 {data}
 }};
 """
-    boxplot_postamble = "}{{0.1}}\n"
+    boxplot_postamble = "}}{{{scale}}}\n"
 
     plot = ""
     plot += boxplot_preamble
@@ -21,10 +21,10 @@ data
         data = map(lambda s: s + " \\\\", data)
         data = "\n".join(data)
         plot += boxplot_template.format(
-            index=int(column)/10,
+            index=int(column)/input_connectivity_step_size,
             data=data)
 
-    plot += boxplot_postamble
+    plot += boxplot_postamble.format(scale=1.0/input_connectivity_step_size)
 
     return plot
 
@@ -34,21 +34,25 @@ if __name__ == "__main__":
     parser.add_argument('output_directory', nargs="?", help='where to store output')
     arguments = parser.parse_args()
 
-    with open(arguments.directory + '/result.json') as f:
+    with open('/'.join([arguments.directory, 'result.json'])) as f:
         datasets = json.load(f)
 
-    with open(arguments.directory + '/config.json') as f:
+    with open('/'.join([arguments.directory, 'config.json'])) as f:
         config = json.load(f)
 
-    print "Writing plots"
     for n_nodes in datasets.keys():
-        latex_plot = make_plot(datasets[n_nodes])
+        latex_plot = make_plot(
+            datasets[n_nodes],
+            config["distribution"]["input_connectivity_step_size"])
+
         filename = "{}/boxplot-N{}-K{}-S{}.tex".format(
             arguments.output_directory or arguments.directory,
             n_nodes, config["reservoir"]["connectivity"],
             config["distribution"]["n_samples"])
+
         with open(filename, 'w') as f:
             f.write(latex_plot)
-        print filename
+
+        print "Wrote: " + filename
 
     print "Finished writing plots"
