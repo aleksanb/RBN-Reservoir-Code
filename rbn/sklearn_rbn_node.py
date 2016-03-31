@@ -28,7 +28,8 @@ class RBNNode():
                  input_connectivity=None, input_connections=None,
                  n_runs_after_perturb=1, should_perturb=True,
                  connections=None,
-                 rules=None):
+                 rules=None,
+                 output_connectivity=None):
         self.n_nodes = n_nodes
         self.connectivity = connectivity
         self.expected_p = expected_p
@@ -63,18 +64,23 @@ class RBNNode():
                                         self.connectivity,
                                         self.expected_p)
 
+        self.output_connectivity = output_connectivity or self.n_nodes
+
     def execute(self, input_array):
         steps = input_array.shape[0]
 
-        output_states = numpy.zeros((steps, self.n_nodes))
+        output_states = numpy.zeros((steps, self.output_connectivity))
 
         for step in range(steps):
             perturbance = input_array[step][0]
+
             if self.should_perturb:
                 self._perturb_rbn(perturbance)
+
             for _ in range(self.n_runs_after_perturb):
                 self._run_crbn()
-            output_states[step] = self.state
+
+            output_states[step] = self.state[:self.output_connectivity]
 
         return output_states
 
@@ -83,6 +89,7 @@ class RBNNode():
 
     def _run_crbn(self):
         next_state = create_empty_state(self.n_nodes)
+
         for n in range(self.n_nodes):
             neighbors = self.connections[n]
             neighbor_states = self.state[neighbors]
