@@ -64,7 +64,10 @@ class RBNNode():
                                         self.connectivity,
                                         self.expected_p)
 
-        self.output_connectivity = output_connectivity or self.n_nodes
+        if output_connectivity is None:
+            output_connectivity = self.n_nodes
+
+        self.output_connectivity = output_connectivity
 
     def execute(self, input_array):
         steps = input_array.shape[0]
@@ -103,5 +106,5 @@ class RBNNode():
         self.state = create_empty_state(self.n_nodes)
 
     def __repr__(self):
-        return "[N:{}-K:{}-I:{}]".format(
-            self.n_nodes, self.connectivity, self.input_connectivity)
+        return "[N:{}-K:{}-I:{}-O:{}]".format(
+            self.n_nodes, self.connectivity, self.input_connectivity, self.output_connectivity)

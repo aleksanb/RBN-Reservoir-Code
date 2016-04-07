@@ -21,26 +21,36 @@ if __name__ == '__main__':
         print conf
         config = json.loads(conf)
 
+    # System
     n_cores = config['system']['n_cores']
 
+    # Datasets
     training_input, training_output =\
             create_datasets(**config['datasets']['training'])[0]
     test_input, test_output =\
             create_datasets(**config['datasets']['test'])[0]
 
+    # Reservoir
     reservoir_connectivity = config['reservoir']['connectivity']
 
+    # Distribution
     n_nodes_range = range(*config['distribution']['n_nodes_range'])
     n_samples = config['distribution']['n_samples']
-    input_connectivity_step_size = config['distribution']['input_connectivity_step_size']
 
-    def calculate_accuracy((n_nodes, input_connectivity), callback=None):
+    input_connectivity_fn = eval(config['distribution']['input_connectivity_fn'])
+    output_connectivity_fn = eval(config['distribution']['output_connectivity_fn'])
+
+    def calculate_accuracy((n_nodes, input_connectivity, output_connectivity)):
         accuracies = []
-        print "START-{}-{}".format(n_nodes, input_connectivity)
+        description = '-'.join(map(str,[n_nodes, input_connectivity, output_connectivity]))
+
+        print "START-" + description
+
         for sample in range(n_samples):
             rbn_reservoir = RBNNode(connectivity=reservoir_connectivity,
                                     input_connectivity=input_connectivity,
-                                    n_nodes=n_nodes)
+                                    n_nodes=n_nodes,
+                                    output_connectivity=output_connectivity)
             readout_layer = Ridge()
 
             training_states = rbn_reservoir.execute(training_input)
@@ -55,27 +65,43 @@ if __name__ == '__main__':
             accuracy = 1 - float(errors) / len(predictions)
 
             accuracies.append(accuracy)
-        print "END-{}-{}".format(n_nodes, input_connectivity)
-        return accuracies
+
+        print "END-" + description
+
+        return {
+            "accuracies": accuracies,
+            "n_nodes": n_nodes,
+            "n_samples": n_samples,
+            "input_connectivity": input_connectivity,
+            "output_connectivity": output_connectivity
+        }
 
     reservoir_distribution = {}
     pool = mp.Pool(n_cores)
+
     for n_nodes in n_nodes_range:
-        reservoir_distribution[n_nodes] = {}
-        input_connectivity_range = range(0,
-                                         n_nodes + 1,
-                                         input_connectivity_step_size)
+        reservoir_distribution[n_nodes] = []
+
+        input_connectivity_range = input_connectivity_fn(n_nodes)
+        output_connectivity_range = output_connectivity_fn(n_nodes)
+
         for input_connectivity in input_connectivity_range:
-            reservoir_distribution[n_nodes][input_connectivity] = pool.apply_async(
-                calculate_accuracy,
-                [(n_nodes, input_connectivity)])
+            for output_connectivity in output_connectivity_range:
+                if output_connectivity == 0:
+                    continue
+
+                result = pool.apply_async(
+                    calculate_accuracy,
+                    [(n_nodes, input_connectivity, output_connectivity)])
+
+                reservoir_distribution[n_nodes].append(result)
 
     pool.close()
     pool.join()
 
     for n in reservoir_distribution:
-        for ic in reservoir_distribution[n]:
-            reservoir_distribution[n][ic] = reservoir_distribution[n][ic].get()
+        for i in range(len(reservoir_distribution[n])):
+            reservoir_distribution[n][i] = reservoir_distribution[n][i].get()
 
     with open('/'.join([arguments.directory, 'result.json']), 'w') as f:
         json.dump(reservoir_distribution, f, indent=4, sort_keys=True)
