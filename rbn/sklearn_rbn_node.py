@@ -1,26 +1,5 @@
 import numpy
 
-def create_empty_state(n_nodes):
-    return numpy.zeros(n_nodes, dtype='int')
-
-
-def generate_connections(n_nodes, connectivity):
-    return [
-        numpy.random.choice(
-            range(n_nodes),
-            connectivity,
-            replace=False)
-        for n in range(n_nodes)]
-
-
-def generate_rule(connectivity, expected_p):
-    return [numpy.random.binomial(1, expected_p)
-            for _ in range(2 ** connectivity)]
-
-
-def generate_rules(n_nodes, connectivity, expected_p):
-    return [generate_rule(connectivity, expected_p) for n in range(n_nodes)]
-
 
 class RBNNode():
     def __init__(self,
@@ -37,8 +16,12 @@ class RBNNode():
         self.n_runs_after_perturb = n_runs_after_perturb
         self.should_perturb = should_perturb
 
+        # Initialize unique numpy random for use with multiprocessing
+        self.npr = numpy.random.RandomState()
+
         # Initialize state and connections
-        self.reset_state()
+
+        self.state = self._empty_state()
 
         if input_connections is not None:
             self.input_connectivity = len(input_connections)
@@ -46,28 +29,36 @@ class RBNNode():
         elif input_connectivity is not None:
             self.input_connectivity = input_connectivity
             self.input_connections =\
-                numpy.random.choice(range(self.n_nodes),
-                                    self.input_connectivity,
-                                    replace=False)
+                self.npr.choice(self.n_nodes,
+                                self.input_connectivity,
+                                replace=False)
         else:
             raise Exception('Must provide either input_connections or input_connectivity')
 
         if connections is not None:
             self.connections = connections
         else:
-            self.connections = generate_connections(self.n_nodes,
-                                                    self.connectivity)
+            self.connections = numpy.array([self.npr.choice(
+                    self.n_nodes,
+                    self.connectivity,
+                    replace=False)
+                    for _ in range(self.n_nodes)])
+
         if rules is not None:
             self.rules = rules
         else:
-            self.rules = generate_rules(self.n_nodes,
-                                        self.connectivity,
-                                        self.expected_p)
+            self.rules = self.npr.binomial(
+                    1,
+                    self.expected_p,
+                    size=(self.n_nodes, 2 ** self.connectivity))
 
         if output_connectivity is None:
             output_connectivity = self.n_nodes
 
         self.output_connectivity = output_connectivity
+
+    def _empty_state(self):
+        return numpy.zeros(self.n_nodes, dtype='int')
 
     def execute(self, input_array):
         steps = input_array.shape[0]
@@ -78,7 +69,7 @@ class RBNNode():
             perturbance = input_array[step][0]
 
             if self.should_perturb:
-                self._perturb_rbn(perturbance)
+                self.state[self.input_connections] = perturbance
 
             for _ in range(self.n_runs_after_perturb):
                 self._run_crbn()
@@ -87,11 +78,8 @@ class RBNNode():
 
         return output_states
 
-    def _perturb_rbn(self, perturbance):
-        self.state[self.input_connections] = perturbance
-
     def _run_crbn(self):
-        next_state = create_empty_state(self.n_nodes)
+        next_state = self._empty_state()
 
         for n in range(self.n_nodes):
             neighbors = self.connections[n]
@@ -101,9 +89,6 @@ class RBNNode():
             next_state[n] = new_value
 
         self.state = next_state
-
-    def reset_state(self):
-        self.state = create_empty_state(self.n_nodes)
 
     def __repr__(self):
         return "[N:{}-K:{}-I:{}-O:{}]".format(
