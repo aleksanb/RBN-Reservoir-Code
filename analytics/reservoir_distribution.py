@@ -1,6 +1,7 @@
 from tasks.temporal import create_datasets
 from rbn.sklearn_rbn_node import RBNNode
-from sklearn.linear_model import Ridge
+from rbn.reservoir_system import ReservoirSystem
+
 from utils import fst, snd
 
 import multiprocessing as mp
@@ -51,18 +52,10 @@ if __name__ == '__main__':
                                     input_connectivity=input_connectivity,
                                     n_nodes=n_nodes,
                                     output_connectivity=output_connectivity)
-            readout_layer = Ridge()
 
-            training_states = rbn_reservoir.execute(training_input)
-            readout_layer.fit(training_states, training_output)
-
-            test_states = rbn_reservoir.execute(test_input)
-            predictions = readout_layer.predict(test_states)
-            for prediction in predictions:
-                prediction[0] = 1 if prediction[0] > 0.5 else 0
-
-            errors = sum(predictions != test_output)
-            accuracy = 1 - float(errors) / len(predictions)
+            reservoir_system = ReservoirSystem(rbn_reservoir)
+            reservoir_system.train_on(training_input, training_output)
+            accuracy = reservoir_system.test_on(test_input, test_output)
 
             accuracies.append(accuracy)
 
