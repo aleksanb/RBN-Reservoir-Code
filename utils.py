@@ -9,6 +9,10 @@ import numpy as np
 logger = logging.getLogger()
 
 
+def select(field, collection):
+    return [item[field] for item in collection]
+
+
 def fst(t):
     return t[0]
 

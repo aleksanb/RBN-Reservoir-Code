@@ -34,11 +34,9 @@ def find_attractor(rbn, initial_state, attractors):
 def find_attractors(rbn, print_progress=True):
     initial_states = itertools.product([0, 1], repeat=rbn.n_nodes)
     attractors = {}
-    transient_times = []
 
-    for idx, initial_state in enumerate(initial_states):
-        transient_time  = find_attractor(rbn, initial_state, attractors)
-        transient_times.append(transient_time)
+    transient_times = [find_attractor(rbn, initial_state, attractors)
+                       for initial_state in initial_states]
 
     n_attractors = len(attractors)
     mean_attractor_length = np.mean(map(len, attractors.values()))

@@ -1,7 +1,9 @@
 from argparse import ArgumentParser
 import json
+import itertools
+import os.path
 
-def make_plot(distributions, column_to_plot_against, scale):
+def make_plot(plot_data):
     boxplot_preamble = "\\myboxplot{\n"
     boxplot_template=\
 """
@@ -11,59 +13,57 @@ data
 {data}
 }};
 """
-    boxplot_postamble = "}}{{{scale}}}\n"
+    boxplot_postamble = "}}{{{scale}}}{{{label}}}\n"
 
-    plot = ""
-    plot += boxplot_preamble
+    final_plot = boxplot_preamble
 
-    for distribution in distributions:
-        data = map(str, distribution["accuracies"])
-        data = map(lambda s: s + " \\\\", data)
-        data = "\n".join(data)
+    xs = sorted([plot[0] for plot in plot_data])
+    scale = xs[1] - xs[0] if len(xs) > 1 else xs[0]
 
-        index = distribution[column_to_plot_against] / scale
-        plot += boxplot_template.format(
+    for (x_index, samples) in plot_data:
+        data = "\n".join(["{} \\\\".format(sample)
+                          for sample in samples])
+
+        index = x_index / scale
+        final_plot += boxplot_template.format(
             index=index,
             data=data)
 
-    plot += boxplot_postamble.format(scale=1.0/scale)
-
-    return plot
+    final_plot += boxplot_postamble.format(
+        scale=1.0/scale,
+        label='')
+    return final_plot
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument('directory', help='path to dump directory')
-    parser.add_argument('output_directory', nargs="?", help='where to store output')
-    column_to_plot_against = "output_connectivity"
+    parser.add_argument('results', help='Path to results file')
+    parser.add_argument('column', help='Column to plot against accuracy')
+    parser.add_argument('--output_dir', help='where to store output')
     arguments = parser.parse_args()
 
-    with open('/'.join([arguments.directory, 'result.json'])) as f:
+    output_dir = results_dir =\
+        os.path.dirname(os.path.join(os.getcwd(), arguments.results))
+    if arguments.output_dir:
+        output_dir = os.path.join(os.getcwd(), arguments.output_dir)
+
+    with open(arguments.results) as f:
         datasets = json.load(f)
 
-    with open('/'.join([arguments.directory, 'config.json'])) as f:
-        config = json.load(f)
+    for n_nodes, reservoir_configurations in datasets.iteritems():
+        plot_data = [
+                (configuration[arguments.column],
+                 configuration['accuracies'])
+                for configuration in reservoir_configurations]
 
-    for n_nodes, distributions_for_n in datasets.iteritems():
-        #keys = sorted([d[column_to_plot_against] for d in distributions_for_n])
-        #print keys
-        #scale = keys[1] - keys[0] if len(keys) > 1 else keys[0]
-        scale = 10
+        latex_plot = make_plot(plot_data)
 
-        latex_plot = make_plot(
-            distributions_for_n,
-            column_to_plot_against,
-            scale)
+        filename = "boxplot-{}-N{}-K{}-S{}.tex".format(
+                arguments.column,
+                reservoir_configurations[0]['n_nodes'],
+                3,  # This is fine
+                reservoir_configurations[0]['n_samples'])
+        filepath = os.path.join(output_dir, filename)
 
-        filename = "{}/boxplot-N{}-K{}-S{}-{}.tex".format(
-            arguments.output_directory or arguments.directory,
-            n_nodes,
-            config["reservoir"]["connectivity"],
-            config["distribution"]["n_samples"],
-            column_to_plot_against)
-
-        with open(filename, 'w') as f:
+        with open(filepath, 'w') as f:
             f.write(latex_plot)
-
-        print "Wrote: " + filename
-
-    print "Finished writing plots"
+            print "Wrote: " + filepath
