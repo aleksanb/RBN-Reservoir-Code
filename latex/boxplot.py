@@ -3,7 +3,7 @@ import json
 import itertools
 import os.path
 
-def make_plot(plot_data):
+def make_plot(plot_data, xmax):
     boxplot_preamble = "\\myboxplot{\n"
     boxplot_template=\
 """
@@ -13,7 +13,7 @@ data
 {data}
 }};
 """
-    boxplot_postamble = "}}{{{scale}}}{{{label}}}\n"
+    boxplot_postamble = "}}{{{scale}}}{{{label}}}{{{xmax}}}\n"
 
     final_plot = boxplot_preamble
 
@@ -31,7 +31,8 @@ data
 
     final_plot += boxplot_postamble.format(
         scale=1.0/scale,
-        label='')
+        label='',
+        xmax=xmax)
     return final_plot
 
 if __name__ == "__main__":
@@ -49,13 +50,15 @@ if __name__ == "__main__":
     with open(arguments.results) as f:
         datasets = json.load(f)
 
+    xmax= max(len(conf) for _, conf in datasets.iteritems())
+
     for n_nodes, reservoir_configurations in datasets.iteritems():
         plot_data = [
                 (configuration[arguments.column],
                  configuration['accuracies'])
                 for configuration in reservoir_configurations]
 
-        latex_plot = make_plot(plot_data)
+        latex_plot = make_plot(plot_data, xmax)
 
         filename = "boxplot-{}-N{}-K{}-S{}.tex".format(
                 arguments.column,
