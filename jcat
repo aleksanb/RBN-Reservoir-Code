@@ -1,0 +1,33 @@
+#!/usr/bin/python
+import json
+import sys
+from argparse import ArgumentParser
+
+def combine(left, right):
+    if isinstance(left, list) and isinstance(right, list):
+        return left + right
+    elif isinstance(left, dict) and isinstance(right, dict):
+        left.update(right)
+        return left
+    else:
+        raise TypeError("Heterogenous JSON types, was (%s, %s)" % (type(left), type(right)))
+
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('files', nargs='+', help='Files containing JSON objects')
+    parser.add_argument('--pretty', help='Pretty-prints JSON output')
+    arguments = parser.parse_args()
+
+    files = []
+    for filename in arguments.files:
+        with open(filename, 'r') as f:
+            try:
+                content = json.load(f)
+                files.append(content)
+            except Exception, e:
+                print "File '%s': %s" % (filename, e)
+                sys.exit()
+
+    result = reduce(combine, files)
+    kwargs = {'sort_keys': True, 'indent': 4} if arguments.pretty else {}
+    print json.dumps(result, **kwargs)
