@@ -15,7 +15,8 @@ def combine(left, right):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('files', nargs='+', help='Files containing JSON objects')
-    parser.add_argument('--pretty', help='Pretty-prints JSON output')
+    parser.add_argument('--wrap', action='store_true', help='Wrap JSON input in array')
+    parser.add_argument('--pretty', action='store_true', help='Pretty-prints JSON output')
     arguments = parser.parse_args()
 
     files = []
@@ -28,6 +29,10 @@ if __name__ == '__main__':
                 print "File '%s': %s" % (filename, e)
                 sys.exit()
 
-    result = reduce(combine, files)
+    if arguments.wrap:
+        result = files
+    else:
+        result = reduce(combine, files)
+
     kwargs = {'sort_keys': True, 'indent': 4} if arguments.pretty else {}
     print json.dumps(result, **kwargs)
