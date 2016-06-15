@@ -6,6 +6,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('infile', help='file containing data')
     parser.add_argument('--accuracy', type=float, default=0.90)
+    parser.add_argument('--max-mal', type=float, default=float('inf'))
     arguments = parser.parse_args()
 
     samples = None
@@ -15,8 +16,11 @@ if __name__ == "__main__":
     na = 'n_attractors'
     mal = 'mean_attractor_length'
 
-    xs = [x[na] for x in samples]
-    ys = [x[mal] for x in samples]
+    xs_ys = [(sample[na], sample[mal]) for sample in samples
+                    if sample['accuracy'] >= arguments.accuracy
+                        and sample[mal] <= arguments.max_mal]
+    xs = [e[0] for e in xs_ys]
+    ys = [e[1] for e in xs_ys]
 
     xmin, xmax, xscale = min(xs), max(xs), 1.0
     ymin, ymax, yscale = min(ys), max(ys), 0.5
@@ -27,13 +31,12 @@ if __name__ == "__main__":
     buckets = [[0] * xbuckets for _ in range(ybuckets)]
 
     count = 0
-    for sample in samples:
-        if sample['accuracy'] >= arguments.accuracy:
-            xpos = int((sample[na] - xmin) / xscale)
-            ypos = int((sample[mal] - ymin) / yscale)
+    for (x, y) in xs_ys:
+        xpos = int((x - xmin) / xscale)
+        ypos = int((y - ymin) / yscale)
 
-            buckets[ypos][xpos] += 1
-            count += 1
+        buckets[ypos][xpos] += 1
+        count += 1
 
     print '%', count
 
