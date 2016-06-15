@@ -1,4 +1,5 @@
 import numpy
+import itertools
 
 
 class RBNNode():
@@ -93,3 +94,24 @@ class RBNNode():
     def __repr__(self):
         return "[N:{}-K:{}-I:{}-O:{}]".format(
             self.n_nodes, self.connectivity, self.input_connectivity, self.output_connectivity)
+
+    def into_cnet(self):
+        buf = ".v {}".format(self.n_nodes)
+
+        bitstrings = ["".join(seq)
+                      for seq in itertools.product("01", repeat=self.connectivity)]
+
+        for n in range(self.n_nodes):
+            neighbors = ' '.join(map(str, [i + 1
+                                           for i in self.connections[n]]))
+
+            buf += "\n\n.n {node_id} {n_neighbors} {neighbor_ids}\n".format(
+                    node_id=n + 1, # People love using 1-based indexing, eh?
+                    n_neighbors=self.connectivity,
+                    neighbor_ids=neighbors)
+
+            my_rules = self.rules[n]
+            for i, bitstring in enumerate(bitstrings):
+                buf += "{} {}\n".format(bitstring, my_rules[i])
+
+        return buf
