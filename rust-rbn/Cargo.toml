@@ -1,0 +1,9 @@
+[package]
+name = "rust-rbn"
+version = "0.1.0"
+authors = ["Aleksander Vognild Burkow <aleksanderburkow@gmail.com>"]
+
+[dependencies]
+ndarray = "0.7.0"
+rand = "0.3.0"
+rusty-machine="0.5.2"

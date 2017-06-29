@@ -45,5 +45,6 @@ def find_attractors(rbn, print_progress=True):
     return {
         "n_attractors": n_attractors,
         "mean_attractor_length": mean_attractor_length,
-        "mean_transient_time": mean_transient_time
+        "mean_transient_time": mean_transient_time,
+        "attractors": attractors
     }

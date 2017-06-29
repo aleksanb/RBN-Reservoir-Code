@@ -16,7 +16,7 @@ rbn_reservoir = RBNNode(connectivity=3,
 readout_layer = Ridge()
 
 for td in training_datasets[:1]:
-    rbn_reservoir.reset_state()
+    #rbn_reservoir.reset_state()
 
     reservoir_input, expected_output = td
 
