@@ -1,0 +1,13 @@
+{
+    "200": [
+        {
+            "accuracies": [
+                1.0
+            ], 
+            "input_connectivity": 100, 
+            "n_nodes": 200, 
+            "n_samples": 1, 
+            "output_connectivity": 200
+        }
+    ]
+}
