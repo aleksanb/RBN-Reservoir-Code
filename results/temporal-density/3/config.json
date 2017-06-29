@@ -1,0 +1,29 @@
+{
+    "system": {
+        "n_cores": 4
+    },
+    "datasets": {
+        "training": {
+            "n_datasets": 1,
+            "task_size": 4000,
+            "window_size": 3,
+            "dataset_type": "temporal_density"
+        },
+        "test": {
+            "n_datasets": 1,
+            "task_size": 200,
+            "window_size": 3,
+            "dataset_type": "temporal_density"
+        }
+    },
+    "reservoir": {
+        "connectivity": 3
+    },
+    "distribution": {
+        "n_nodes_range": [5,6],
+        "input_connectivity_fn": "lambda n_nodes: [0, 1, 2, 3, 4, 5]",
+        "output_connectivity_fn": "lambda n_nodes: [n_nodes]",
+
+        "n_samples": 50
+    }
+}
